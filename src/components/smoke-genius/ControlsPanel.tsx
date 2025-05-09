@@ -1,12 +1,12 @@
+
 "use client";
 
 import type { Dispatch, SetStateAction } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   CircleDot,
   StopCircle,
@@ -16,7 +16,9 @@ import {
   Zap,
   MoveHorizontal,
   Play,
-  Pause
+  Pause,
+  Cloud,
+  Flame
 } from "lucide-react";
 
 interface ControlsPanelProps {
@@ -52,26 +54,26 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
           {/* Column 1: Simulation Controls */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Layers className="w-5 h-5 text-accent" />
-              <Label htmlFor="particleCount" className="font-semibold text-sm">Density</Label>
+              <Cloud className="w-5 h-5 text-accent" />
+              <Label htmlFor="particleCount" className="font-semibold text-sm">Smoke Density</Label>
             </div>
             <Slider
               id="particleCount"
-              min={100} max={5000} step={100}
+              min={100} max={8000} step={100} // Increased max particle count
               value={[particleCount]}
               onValueChange={(value) => setParticleCount(value[0])}
-              aria-label="Smoke density"
+              aria-label="Smoke particle density"
             />
              <div className="flex items-center gap-2">
               <Zap className="w-5 h-5 text-accent" />
-              <Label htmlFor="particleSpeed" className="font-semibold text-sm">Speed</Label>
+              <Label htmlFor="particleSpeed" className="font-semibold text-sm">Smoke Speed</Label>
             </div>
             <Slider
               id="particleSpeed"
               min={0.005} max={0.1} step={0.005}
               value={[particleSpeed]}
               onValueChange={(value) => setParticleSpeed(value[0])}
-              aria-label="Smoke speed"
+              aria-label="Smoke particle speed"
             />
           </div>
 
@@ -79,7 +81,7 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
           <div className="space-y-3">
             <div className="flex items-center gap-2">
                 <Palette className="w-5 h-5 text-accent" />
-                <Label htmlFor="particleColor" className="font-semibold text-sm">Color</Label>
+                <Label htmlFor="particleColor" className="font-semibold text-sm">Smoke Color</Label>
             </div>
             <Input
                 id="particleColor"
@@ -87,18 +89,18 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                 value={particleColor}
                 onChange={(e) => setParticleColor(e.target.value)}
                 className="w-full h-10 p-1"
-                aria-label="Smoke color"
+                aria-label="Smoke particle color"
             />
             <div className="flex items-center gap-2">
               <MoveHorizontal className="w-5 h-5 text-accent" />
-              <Label htmlFor="particleSpread" className="font-semibold text-sm">Spread</Label>
+              <Label htmlFor="particleSpread" className="font-semibold text-sm">Smoke Spread</Label>
             </div>
             <Slider
               id="particleSpread"
               min={0.5} max={5} step={0.1}
               value={[particleSpread]}
               onValueChange={(value) => setParticleSpread(value[0])}
-              aria-label="Smoke spread"
+              aria-label="Smoke particle spread"
             />
           </div>
           
@@ -117,12 +119,16 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                 <StopCircle className="mr-2 h-4 w-4" /> Stop Recording
               </Button>
             )}
-            {recordedVideoUrl && (
+            {recordedVideoUrl && mediaRecorderRef.current && (
               <Button onClick={onDownloadRecording} variant="outline" className="w-full md:w-auto">
-                <Download className="mr-2 h-4 w-4" /> Download (WebM)
+                <Download className="mr-2 h-4 w-4" /> 
+                Download ({mediaRecorderRef.current.mimeType.includes('mp4') ? 'MP4' : 'WebM'})
               </Button>
             )}
           </div>
+        </div>
+        <div className="mt-2 text-center text-xs text-muted-foreground">
+            Fire simulation is automatic and adapts to smoke settings.
         </div>
       </CardContent>
     </Card>

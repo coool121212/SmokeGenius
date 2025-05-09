@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
@@ -7,10 +8,10 @@ import ControlsPanel from '@/components/smoke-genius/ControlsPanel';
 import { useToast } from "@/hooks/use-toast";
 
 export default function SmokeGeniusPage() {
-  const [particleCount, setParticleCount] = useState(1000);
-  const [particleColor, setParticleColor] = useState("#CCCCCC");
+  const [particleCount, setParticleCount] = useState(2000); // Increased default
+  const [particleColor, setParticleColor] = useState("#B0B0B0"); // Slightly darker default smoke
   const [particleSpeed, setParticleSpeed] = useState(0.02);
-  const [particleSpread, setParticleSpread] = useState(2);
+  const [particleSpread, setParticleSpread] = useState(2.5); // Slightly wider default spread
   const [isPlaying, setIsPlaying] = useState(true);
 
   const [isRecording, setIsRecording] = useState(false);
@@ -37,8 +38,7 @@ export default function SmokeGeniusPage() {
 
     try {
       const stream = canvasRef.current.captureStream(30); 
-      // Try common codecs, vp9 might not be supported everywhere
-      const mimeTypes = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+      const mimeTypes = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm;codecs=h264', 'video/mp4'];
       let selectedMimeType = '';
       for (const mimeType of mimeTypes) {
         if (MediaRecorder.isTypeSupported(mimeType)) {
@@ -66,7 +66,7 @@ export default function SmokeGeniusPage() {
         const blob = new Blob(recordedChunksRef.current, { type: selectedMimeType });
         const url = URL.createObjectURL(blob);
         setRecordedVideoUrl(url);
-        toast({ title: "Recording Complete", description: "Video is ready for download." });
+        toast({ title: "Recording Complete", description: `Video (${selectedMimeType.split('/')[1].split(';')[0]}) is ready.` });
       };
       
       mediaRecorderRef.current.onerror = (event) => {
@@ -94,30 +94,31 @@ export default function SmokeGeniusPage() {
       toast({ title: "Recording Error", description: message, variant: "destructive" });
       setIsRecording(false);
     }
-  }, [toast]); // canvasRef, mediaRecorderRef, recordedChunksRef are stable refs. setIsRecording, setRecordedVideoUrl are stable.
+  }, [toast]); 
 
   const handleStopRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       mediaRecorderRef.current.stop();
     }
-    setIsRecording(false); // Ensure isRecording is set to false
-  }, []); // mediaRecorderRef is stable. setIsRecording is stable.
+    setIsRecording(false); 
+  }, []); 
 
   const handleDownloadRecording = useCallback(() => {
-    if (recordedVideoUrl) {
+    if (recordedVideoUrl && mediaRecorderRef.current) {
       const a = document.createElement('a');
       a.href = recordedVideoUrl;
-      a.download = 'smoke_simulation.webm';
+      const mimeType = mediaRecorderRef.current.mimeType;
+      const extension = mimeType.includes('mp4') ? 'mp4' : 'webm';
+      a.download = `smoke_simulation.${extension}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      toast({ title: "Download Started", description: "smoke_simulation.webm" });
+      toast({ title: "Download Started", description: `smoke_simulation.${extension}` });
     } else {
       toast({ title: "No Recording", description: "No video available to download.", variant: "destructive" });
     }
   }, [recordedVideoUrl, toast]);
   
-  // Clean up object URL when component unmounts or URL changes
   useEffect(() => {
     let currentUrl = recordedVideoUrl;
     return () => {
@@ -159,3 +160,4 @@ export default function SmokeGeniusPage() {
     </div>
   );
 }
+
