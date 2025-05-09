@@ -1,3 +1,4 @@
+
 "use client";
 
 import type * as THREE from 'three';
@@ -290,7 +291,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     const clock = new THREE_Module.Clock();
 
     const animate = () => {
-      if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
+      if (!rendererRef.current || !sceneRef.current || !cameraRef.current || !THREE_Module) return;
       
       animationFrameIdRef.current = requestAnimationFrame(animate);
       const delta = clock.getDelta(); // Time elapsed since last frame
@@ -375,7 +376,6 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
               
               // Transition color based on life (e.g., brighter when young, more reddish/embers when old)
               const fireHsl = { h: 0, s: 0, l: 0 };
-              colors.getXYZ(i, fireHsl); // Get current color of particle
               const baseParticleColor = new THREE_Module.Color(colors.getX(i), colors.getY(i), colors.getZ(i));
               baseParticleColor.getHSL(fireHsl);
 
@@ -395,7 +395,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     animate();
 
     const debouncedResize = debounce(() => {
-      if (mountRef.current && rendererRef.current && cameraRef.current) {
+      if (mountRef.current && rendererRef.current && cameraRef.current && THREE_Module) {
         const width = mountRef.current.clientWidth;
         const height = mountRef.current.clientHeight;
         rendererRef.current.setSize(width, height);
@@ -421,40 +421,27 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       smokeParticlesRef.current = null; fireParticlesRef.current = null;
     };
   // Must re-run if counts or primary simulation parameters change significantly to re-initialize particles
-  }, [isThreeLoaded, actualSmokeParticleCount, actualFireParticleCount, onCanvasReady, initParticles]); 
+  }, [isThreeLoaded, actualSmokeParticleCount, actualFireParticleCount, onCanvasReady, initParticles, backgroundColor, fireColor, fireSpeed, fireSpread, isFireEnabled, smokeColor, smokeSpeed, smokeSpread, isPlaying]); 
 
 
   // Effect to update smoke parameters dynamically (color, speed, spread)
+  // Note: The main useEffect already includes these as dependencies for potential re-initialization.
+  // Fine-tuning existing particles without full re-init can be complex.
+  // The animation loop handles per-frame color updates for smoke based on `smokeColor`.
+  // Speed and spread changes ideally lead to re-initialization for accurate visual results, handled by main useEffect.
   useEffect(() => {
     if (!isThreeLoaded || !THREE_Module || !smokeParticlesRef.current?.geometry) return;
-    const geom = smokeParticlesRef.current.geometry as THREE.BufferGeometry;
-    const velocities = geom.getAttribute('velocity') as THREE.BufferAttribute;
-    // Color is handled in animation loop for per-particle basis if needed, or globally here for material.
-    // For speed/spread, one might re-initialize or adjust velocities.
-    // For simplicity, these often require re-initialization for best effect, which is covered by main useEffect.
-    // However, direct velocity update is possible:
-     for (let i = 0; i < velocities.count; i++) {
-        const baseVelY = Math.random() * smokeSpeed + 0.01;
-        // Update X and Z based on spread, if desired without full re-init
-        const baseVelX = (Math.random() - 0.5) * 0.025 * smokeSpread;
-        const baseVelZ = (Math.random() - 0.5) * 0.025 * smokeSpread;
-        velocities.setXYZ(i, baseVelX, baseVelY, baseVelZ);
-     }
-     velocities.needsUpdate = true;
+    // The animation loop takes care of applying smokeColor to particles as they reset.
+    // For immediate effect on existing particles, one might iterate and update colors attribute here too,
+    // but it's usually sufficient to let them update as they recycle.
+    // Speed and spread are best handled by re-initialization (main useEffect).
   }, [smokeColor, smokeSpeed, smokeSpread, isThreeLoaded, THREE_Module]);
 
   // Effect to update fire parameters dynamically
+  // Similar to smoke, color is handled in animation loop. Speed/spread by re-init.
   useEffect(() => {
     if (!isThreeLoaded || !THREE_Module || !fireParticlesRef.current?.geometry) return;
-     const geom = fireParticlesRef.current.geometry as THREE.BufferGeometry;
-     const velocities = geom.getAttribute('velocity') as THREE.BufferAttribute;
-     for (let i = 0; i < velocities.count; i++) {
-        const baseVelY = (Math.random() * fireSpeed * 2.0) + fireSpeed * 1.2;
-        const baseVelX = (Math.random() - 0.5) * 0.015 * fireSpread;
-        const baseVelZ = (Math.random() - 0.5) * 0.015 * fireSpread;
-        velocities.setXYZ(i, baseVelX, baseVelY, baseVelZ);
-     }
-     velocities.needsUpdate = true;
+    // Fire color is handled in the animation loop for new and existing particles.
   }, [fireColor, fireSpeed, fireSpread, isThreeLoaded, THREE_Module]);
 
 
@@ -502,3 +489,4 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
 };
 
 export default SmokeCanvas;
+
