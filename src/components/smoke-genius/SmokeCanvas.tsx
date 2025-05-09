@@ -1,11 +1,12 @@
+
 "use client";
 
 import type * as THREE from 'three';
-import React, { useEffect, useRef, useMemo, useState } from 'react'; // Added React and useState
-// Import THREE dynamically if it's large or only used client-side
-// For now, direct import assuming 'three' is managed well by bundler
-let THREE_Module: typeof THREE | null = null;
+import React, { useEffect, useRef, useMemo, useState } from 'react';
+import { debounce } from '@/lib/utils'; // Import debounce
 
+// Import THREE dynamically if it's large or only used client-side
+let THREE_Module: typeof THREE | null = null;
 
 interface SmokeCanvasProps {
   particleCount?: number;
@@ -30,18 +31,25 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const particlesRef = useRef<THREE.Points | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
+  
   const [isThreeLoaded, setIsThreeLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     import('three').then(three => {
       THREE_Module = three;
       setIsThreeLoaded(true);
-    }).catch(err => console.error("Failed to load Three.js", err));
+      setLoadError(null); // Clear any previous error
+    }).catch(err => {
+      console.error("Failed to load Three.js", err);
+      setLoadError("Failed to load 3D rendering library. Please try refreshing the page.");
+      setIsThreeLoaded(false); // Ensure this is false on error
+    });
   }, []);
 
 
   const smokeParticleTexture = useMemo(() => {
-    if (!THREE_Module) return null;
+    if (!THREE_Module || !isThreeLoaded) return null;
     const canvas = document.createElement('canvas');
     canvas.width = 128;
     canvas.height = 128;
@@ -52,9 +60,9 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       canvas.width / 2, canvas.height / 2, 0,
       canvas.width / 2, canvas.height / 2, canvas.width / 2
     );
-    gradient.addColorStop(0, 'rgba(255,255,255,0.5)'); // Center is semi-transparent
+    gradient.addColorStop(0, 'rgba(255,255,255,0.5)');
     gradient.addColorStop(0.5, 'rgba(255,255,255,0.2)');
-    gradient.addColorStop(1, 'rgba(255,255,255,0)'); // Edge is fully transparent
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');
 
     context.fillStyle = gradient;
     context.fillRect(0, 0, canvas.width, canvas.height);
@@ -64,7 +72,6 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   useEffect(() => {
     if (!mountRef.current || !isThreeLoaded || !THREE_Module || !smokeParticleTexture) return;
 
-    // Scene setup
     const scene = new THREE_Module.Scene();
     sceneRef.current = scene;
     
@@ -81,19 +88,18 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       onCanvasReady(renderer.domElement);
     }
     
-    // Particle system
     const geometry = new THREE_Module.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const velocities = new Float32Array(particleCount * 3);
 
     for (let i = 0; i < particleCount * 3; i += 3) {
-      positions[i] = (Math.random() - 0.5) * particleSpread * 2; // x
-      positions[i + 1] = (Math.random() - 0.5) * 0.5 - 2;       // y (start below view)
-      positions[i + 2] = (Math.random() - 0.5) * particleSpread; // z
+      positions[i] = (Math.random() - 0.5) * particleSpread * 2;
+      positions[i + 1] = (Math.random() - 0.5) * 0.5 - 2;
+      positions[i + 2] = (Math.random() - 0.5) * particleSpread;
       
-      velocities[i] = (Math.random() - 0.5) * 0.01 * particleSpread; // x-velocity
-      velocities[i+1] = Math.random() * particleSpeed + 0.01; // y-velocity (upwards)
-      velocities[i+2] = (Math.random() - 0.5) * 0.01 * particleSpread; // z-velocity
+      velocities[i] = (Math.random() - 0.5) * 0.01 * particleSpread;
+      velocities[i+1] = Math.random() * particleSpeed + 0.01;
+      velocities[i+2] = (Math.random() - 0.5) * 0.01 * particleSpread;
     }
     geometry.setAttribute('position', new THREE_Module.BufferAttribute(positions, 3));
     geometry.setAttribute('velocity', new THREE_Module.BufferAttribute(velocities, 3));
@@ -112,7 +118,6 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     scene.add(particles);
     particlesRef.current = particles;
 
-    // Animation loop
     const animate = () => {
       if (!particlesRef.current || !rendererRef.current || !sceneRef.current || !cameraRef.current) return;
       
@@ -127,7 +132,6 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
           positionsAttribute.setX(i, positionsAttribute.getX(i) + velocitiesAttribute.getX(i));
           positionsAttribute.setZ(i, positionsAttribute.getZ(i) + velocitiesAttribute.getZ(i));
           
-          // Reset particle if it goes too high
           if (positionsAttribute.getY(i) > 5) {
             positionsAttribute.setY(i, (Math.random() - 0.5) * 0.5 - 2);
             positionsAttribute.setX(i, (Math.random() - 0.5) * particleSpread * 2);
@@ -140,8 +144,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     };
     animate();
 
-    // Handle resize
-    const handleResize = () => {
+    const debouncedResize = debounce(() => {
       if (mountRef.current && rendererRef.current && cameraRef.current) {
         const width = mountRef.current.clientWidth;
         const height = mountRef.current.clientHeight;
@@ -149,14 +152,14 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
         cameraRef.current.aspect = width / height;
         cameraRef.current.updateProjectionMatrix();
       }
-    };
-    window.addEventListener('resize', handleResize);
+    }, 250);
 
-    // Cleanup
+    window.addEventListener('resize', debouncedResize);
+
     return () => {
       if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
-      window.removeEventListener('resize', handleResize);
-      if (mountRef.current && rendererRef.current) {
+      window.removeEventListener('resize', debouncedResize);
+      if (mountRef.current && rendererRef.current?.domElement) {
         mountRef.current.removeChild(rendererRef.current.domElement);
       }
       rendererRef.current?.dispose();
@@ -168,39 +171,60 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       rendererRef.current = null;
       particlesRef.current = null;
     };
-  }, [isThreeLoaded, particleCount, particleSpread, smokeParticleTexture, onCanvasReady, particleSpeed, isPlaying, particleColor]); // Added particleSpeed, isPlaying, particleColor to dependency array
+  }, [isThreeLoaded, particleCount, particleSpread, smokeParticleTexture, onCanvasReady, particleSpeed, isPlaying, particleColor]);
 
-  // Update material color when prop changes
   useEffect(() => {
-    if (!THREE_Module) return;
+    if (!isThreeLoaded || !THREE_Module) return;
     if (particlesRef.current && particlesRef.current.material) {
       (particlesRef.current.material as THREE.PointsMaterial).color.set(new THREE_Module.Color(particleColor));
     }
   }, [particleColor, isThreeLoaded]);
 
-  // Update particle speed (by modifying velocities)
    useEffect(() => {
-    if (particlesRef.current && particlesRef.current.geometry) {
-      const velocitiesAttribute = particlesRef.current.geometry.getAttribute('velocity') as THREE.BufferAttribute;
-      if (velocitiesAttribute) {
-        for (let i = 0; i < velocitiesAttribute.count; i++) {
-            // Keep X and Z velocities, just update Y
-            const currentXVel = velocitiesAttribute.getX(i);
-            const currentZVel = velocitiesAttribute.getZ(i);
-            velocitiesAttribute.setXYZ(
-                i,
-                currentXVel, // Keep existing X velocity relative to spread
-                Math.random() * particleSpeed + 0.01, // New Y velocity
-                currentZVel  // Keep existing Z velocity relative to spread
-            );
-        }
-        velocitiesAttribute.needsUpdate = true;
+    if (!isThreeLoaded || !particlesRef.current || !particlesRef.current.geometry) return;
+    
+    const velocitiesAttribute = particlesRef.current.geometry.getAttribute('velocity') as THREE.BufferAttribute;
+    if (velocitiesAttribute) {
+      for (let i = 0; i < velocitiesAttribute.count; i++) {
+          const currentXVel = velocitiesAttribute.getX(i);
+          // To make speed only affect upward motion, we re-calculate y-velocity based on particleSpeed
+          // and keep x/z velocities relative to their initial random spread.
+          // If particleSpeed should influence x/z velocities too, this logic would need adjustment.
+          // For now, assuming particleSpeed mostly controls upward movement strength.
+          const initialBaseYVelocity = Math.random() * particleSpeed + 0.01; // Recalculate Y based on new speed
+          const currentZVel = velocitiesAttribute.getZ(i);
+
+          velocitiesAttribute.setXYZ(
+              i,
+              currentXVel, 
+              initialBaseYVelocity,
+              currentZVel
+          );
       }
+      velocitiesAttribute.needsUpdate = true;
     }
-  }, [particleSpeed]);
+  }, [particleSpeed, isThreeLoaded]); // Ensure effect re-runs if particleSpeed or isThreeLoaded changes
 
+  if (loadError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center p-4 bg-destructive/10 text-destructive-foreground" role="alert">
+        <div className="text-center">
+          <p className="font-semibold text-lg">Error Loading Simulation</p>
+          <p>{loadError}</p>
+        </div>
+      </div>
+    );
+  }
 
-  return <div ref={mountRef} className="w-full h-full" data-ai-hint="smoke particles" />;
+  if (!isThreeLoaded) {
+    return (
+      <div className="w-full h-full flex items-center justify-center" data-ai-hint="loading indicator">
+        <p className="text-lg">Loading 3D Smoke Simulation...</p>
+      </div>
+    );
+  }
+
+  return <div ref={mountRef} className="w-full h-full" role="img" aria-label="Smoke simulation canvas" data-ai-hint="smoke particles" />;
 };
 
 export default SmokeCanvas;
