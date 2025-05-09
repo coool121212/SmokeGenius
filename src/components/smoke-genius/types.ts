@@ -17,6 +17,8 @@ export interface SimulationPreset {
   fireDensity: number;
   fireSpeed: number;
   fireSpread: number;
+  fireParticleSource: ParticleSource;
+  fireBlendMode: BlendMode;
   backgroundColor: string;
 }
 

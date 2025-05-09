@@ -39,7 +39,7 @@ import {
   Target, 
   MousePointer2, 
   ArrowDownToLine, 
-  LocateFixed, // For Select Particle Source Icon
+  LocateFixed, 
 } from "lucide-react";
 
 interface ControlsPanelProps {
@@ -68,6 +68,11 @@ interface ControlsPanelProps {
   setFireSpeed: Dispatch<SetStateAction<number>>;
   fireSpread: number;
   setFireSpread: Dispatch<SetStateAction<number>>;
+  fireParticleSource: ParticleSource;
+  setFireParticleSource: Dispatch<SetStateAction<ParticleSource>>;
+  fireBlendMode: BlendMode;
+  setFireBlendMode: Dispatch<SetStateAction<BlendMode>>;
+
 
   backgroundColor: string;
   setBackgroundColor: Dispatch<SetStateAction<string>>;
@@ -98,6 +103,8 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
   fireDensity, setFireDensity,
   fireSpeed, setFireSpeed,
   fireSpread, setFireSpread,
+  fireParticleSource, setFireParticleSource,
+  fireBlendMode, setFireBlendMode,
 
   backgroundColor, setBackgroundColor,
 
@@ -271,6 +278,46 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                           <Label htmlFor="fireSpread" className="font-semibold text-sm">Spread</Label>
                         </div>
                         <Slider id="fireSpread" min={0.2} max={3} step={0.1} value={[fireSpread]} onValueChange={(v) => setFireSpread(v[0])} aria-label="Fire particle spread" />
+                      </div>
+                       <div>
+                        <div className="flex items-center gap-2 mb-2">
+                           <LocateFixed className="w-5 h-5 text-accent" /> 
+                           <Label className="font-semibold text-sm">Particle Source</Label>
+                        </div>
+                        <Select
+                          value={fireParticleSource}
+                          onValueChange={(value: ParticleSource) => setFireParticleSource(value)}
+                        >
+                          <SelectTrigger aria-label="Fire particle source">
+                            <SelectValue placeholder="Select particle source" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {particleSourceOptions.map(option => (
+                              <SelectItem key={option.value} value={option.value}>
+                                <div className="flex items-center gap-2">
+                                  <option.icon className="w-4 h-4" />
+                                  {option.label}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                           <Blend className="w-5 h-5 text-accent" />
+                           <Label className="font-semibold text-sm">Blend Mode</Label>
+                        </div>
+                        <Select value={fireBlendMode} onValueChange={(value: BlendMode) => setFireBlendMode(value)}>
+                          <SelectTrigger aria-label="Fire blend mode">
+                            <SelectValue placeholder="Select blend mode" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {blendModeOptions.map(option => (
+                              <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </>
                   )}

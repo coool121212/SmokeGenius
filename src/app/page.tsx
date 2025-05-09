@@ -23,6 +23,8 @@ const presets: SimulationPreset[] = [
     fireDensity: 1000,
     fireSpeed: 0.03,
     fireSpread: 1.5,
+    fireParticleSource: "Bottom",
+    fireBlendMode: "Additive",
     backgroundColor: "#000000",
   },
   {
@@ -40,6 +42,8 @@ const presets: SimulationPreset[] = [
     fireDensity: 800,
     fireSpeed: 0.02,
     fireSpread: 1.2,
+    fireParticleSource: "Bottom",
+    fireBlendMode: "Additive",
     backgroundColor: "#101010",
   },
   {
@@ -57,6 +61,8 @@ const presets: SimulationPreset[] = [
     fireDensity: 4500,
     fireSpeed: 0.06,
     fireSpread: 3.0,
+    fireParticleSource: "Bottom",
+    fireBlendMode: "Additive",
     backgroundColor: "#201008",
   },
   {
@@ -74,6 +80,8 @@ const presets: SimulationPreset[] = [
     fireDensity: 0,
     fireSpeed: 0.01,
     fireSpread: 1.0,
+    fireParticleSource: "Bottom",
+    fireBlendMode: "Additive",
     backgroundColor: "#2C3E50",
   },
     {
@@ -91,6 +99,8 @@ const presets: SimulationPreset[] = [
     fireDensity: 500,
     fireSpeed: 0.04,
     fireSpread: 1.0,
+    fireParticleSource: "Center",
+    fireBlendMode: "Additive",
     backgroundColor: "#0A0A1E", 
   },
 ];
@@ -112,6 +122,9 @@ export default function SmokeGeniusPage() {
   const [fireDensity, setFireDensity] = useState(1000);
   const [fireSpeed, setFireSpeed] = useState(0.03);
   const [fireSpread, setFireSpread] = useState(1.5);
+  const [fireParticleSource, setFireParticleSource] = useState<ParticleSource>("Bottom");
+  const [fireBlendMode, setFireBlendMode] = useState<BlendMode>("Additive");
+
 
   // Scene State
   const [backgroundColor, setBackgroundColor] = useState("#000000");
@@ -237,6 +250,8 @@ export default function SmokeGeniusPage() {
     setFireDensity(preset.fireDensity);
     setFireSpeed(preset.fireSpeed);
     setFireSpread(preset.fireSpread);
+    setFireParticleSource(preset.fireParticleSource);
+    setFireBlendMode(preset.fireBlendMode);
 
     setBackgroundColor(preset.backgroundColor);
     toast({ title: "Preset Applied", description: `"${preset.name}" preset loaded.` });
@@ -268,6 +283,8 @@ export default function SmokeGeniusPage() {
           fireDensity={fireDensity}
           fireSpeed={fireSpeed}
           fireSpread={fireSpread}
+          fireParticleSource={fireParticleSource}
+          fireBlendMode={fireBlendMode}
           backgroundColor={backgroundColor}
           isPlaying={isPlaying}
           onCanvasReady={handleCanvasReady}
@@ -299,6 +316,10 @@ export default function SmokeGeniusPage() {
         setFireSpeed={setFireSpeed}
         fireSpread={fireSpread}
         setFireSpread={setFireSpread}
+        fireParticleSource={fireParticleSource}
+        setFireParticleSource={setFireParticleSource}
+        fireBlendMode={fireBlendMode}
+        setFireBlendMode={setFireBlendMode}
 
         backgroundColor={backgroundColor}
         setBackgroundColor={setBackgroundColor}
