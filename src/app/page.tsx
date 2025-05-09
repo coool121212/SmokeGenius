@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
@@ -8,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function SmokeGeniusPage() {
   // Smoke States
   const [smokeDensity, setSmokeDensity] = useState(2000);
-  const [smokeColor, setSmokeColor] = useState("#1A1A1A"); // Default to dark grey/black
+  const [smokeColor, setSmokeColor] = useState("#F5F5F5"); // Default to whitish smoke
   const [smokeSpeed, setSmokeSpeed] = useState(0.02);
   const [smokeSpread, setSmokeSpread] = useState(2.5);
 
@@ -20,7 +21,7 @@ export default function SmokeGeniusPage() {
   const [fireSpread, setFireSpread] = useState(1.5); // Default fire spread
 
   // Scene State
-  const [backgroundColor, setBackgroundColor] = useState("#333333"); // Default background
+  const [backgroundColor, setBackgroundColor] = useState("#000000"); // Default background to black
 
   // Playback & Recording States
   const [isPlaying, setIsPlaying] = useState(true);
@@ -197,3 +198,4 @@ export default function SmokeGeniusPage() {
     </div>
   );
 }
+
