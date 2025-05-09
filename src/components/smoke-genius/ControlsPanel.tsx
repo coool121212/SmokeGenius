@@ -2,7 +2,7 @@
 "use client";
 
 import type { Dispatch, SetStateAction, MutableRefObject } from 'react';
-import type { SimulationPreset } from './types';
+import type { SimulationPreset, BlendMode, ParticleSource } from './types';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Accordion,
   AccordionContent,
@@ -22,18 +24,22 @@ import {
   Download,
   Cloud, 
   Palette,
-  Zap, // Used for speed
-  MoveHorizontal, // Used for spread
+  Zap, 
+  MoveHorizontal, 
   Play,
   Pause,
   Flame, 
   Settings2, 
   Video,
-  PaintBucket, // For background color
-  BarChartBig, // For density/intensity
-  FastForward, // For fire speed
-  Expand, // For fire spread
-  Wand2 // For presets
+  PaintBucket, 
+  BarChartBig, 
+  FastForward, 
+  Expand, 
+  Wand2,
+  Blend, // For Blend Mode
+  Target, // For Particle Source: Center
+  MousePointer2, // For Particle Source: Mouse
+  ArrowDownToLine, // For Particle Source: Bottom
 } from "lucide-react";
 
 interface ControlsPanelProps {
@@ -47,6 +53,10 @@ interface ControlsPanelProps {
   setSmokeSpeed: Dispatch<SetStateAction<number>>;
   smokeSpread: number;
   setSmokeSpread: Dispatch<SetStateAction<number>>;
+  smokeBlendMode: BlendMode;
+  setSmokeBlendMode: Dispatch<SetStateAction<BlendMode>>;
+  smokeSource: ParticleSource;
+  setSmokeSource: Dispatch<SetStateAction<ParticleSource>>;
 
   isFireEnabled: boolean;
   setIsFireEnabled: Dispatch<SetStateAction<boolean>>;
@@ -80,6 +90,8 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
   smokeColor, setSmokeColor,
   smokeSpeed, setSmokeSpeed,
   smokeSpread, setSmokeSpread,
+  smokeBlendMode, setSmokeBlendMode,
+  smokeSource, setSmokeSource,
 
   isFireEnabled, setIsFireEnabled,
   fireColor, setFireColor,
@@ -94,6 +106,20 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
   mediaRecorderRef,
   presets, onApplyPreset
 }) => {
+  const particleSourceOptions: { value: ParticleSource; label: string; icon: React.ElementType }[] = [
+    { value: "Center", label: "Center", icon: Target },
+    { value: "Mouse", label: "Mouse", icon: MousePointer2 },
+    { value: "Bottom", label: "Bottom", icon: ArrowDownToLine },
+  ];
+  
+  const blendModeOptions: {value: BlendMode, label: string}[] = [
+    { value: "Normal", label: "Normal"},
+    { value: "Additive", label: "Additive"},
+    { value: "Subtractive", label: "Subtractive"},
+    { value: "Multiply", label: "Multiply"},
+  ];
+
+
   return (
     <Card className="fixed bottom-0 left-0 right-0 m-2 md:m-4 shadow-2xl border-border bg-card/95 backdrop-blur-sm z-50 max-w-4xl mx-auto">
       <Accordion type="single" collapsible className="w-full" defaultValue="controls-panel">
@@ -107,12 +133,12 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
           </AccordionTrigger>
           <AccordionContent className="px-4 pb-4 pt-0">
             <Tabs defaultValue="smoke" className="w-full">
-              <TabsList className="grid w-full grid-cols-5 mb-4"> {/* Updated from 4 to 5 columns */}
+              <TabsList className="grid w-full grid-cols-5 mb-4"> 
                 <TabsTrigger value="smoke">Smoke</TabsTrigger>
                 <TabsTrigger value="fire">Fire</TabsTrigger>
                 <TabsTrigger value="scene">Scene</TabsTrigger>
                 <TabsTrigger value="media">Media</TabsTrigger>
-                <TabsTrigger value="presets">Presets</TabsTrigger> {/* New Tab */}
+                <TabsTrigger value="presets">Presets</TabsTrigger> 
               </TabsList>
 
               <TabsContent value="smoke">
@@ -153,6 +179,48 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                           <Label htmlFor="smokeSpread" className="font-semibold text-sm">Spread</Label>
                         </div>
                         <Slider id="smokeSpread" min={0.5} max={5} step={0.1} value={[smokeSpread]} onValueChange={(v) => setSmokeSpread(v[0])} aria-label="Smoke particle spread" />
+                      </div>
+                      
+                      <div className="col-span-1 md:col-span-2">
+                        <div className="flex items-center gap-2 mb-2">
+                           <Blend className="w-5 h-5 text-accent" />
+                           <Label className="font-semibold text-sm">Blend Mode</Label>
+                        </div>
+                        <Select value={smokeBlendMode} onValueChange={(value: BlendMode) => setSmokeBlendMode(value)}>
+                          <SelectTrigger aria-label="Smoke blend mode">
+                            <SelectValue placeholder="Select blend mode" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {blendModeOptions.map(option => (
+                              <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="col-span-1 md:col-span-2">
+                        <div className="flex items-center gap-2 mb-2">
+                           <Zap className="w-5 h-5 text-accent" /> {/* Using Zap as a generic source icon leader */}
+                           <Label className="font-semibold text-sm">Particle Source</Label>
+                        </div>
+                        <RadioGroup
+                          value={smokeSource}
+                          onValueChange={(value: ParticleSource) => setSmokeSource(value)}
+                          className="grid grid-cols-3 gap-2"
+                          aria-label="Smoke particle source"
+                        >
+                          {particleSourceOptions.map(option => (
+                            <Label
+                              key={option.value}
+                              htmlFor={`smokeSource-${option.value}`}
+                              className={`flex flex-col items-center justify-center gap-1 rounded-md border p-2 hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors ${smokeSource === option.value ? 'bg-accent text-accent-foreground ring-2 ring-primary' : 'bg-background'}`}
+                            >
+                              <RadioGroupItem value={option.value} id={`smokeSource-${option.value}`} className="sr-only" />
+                              <option.icon className="w-5 h-5 mb-1" />
+                              <span className="text-xs">{option.label}</span>
+                            </Label>
+                          ))}
+                        </RadioGroup>
                       </div>
                     </>
                   )}

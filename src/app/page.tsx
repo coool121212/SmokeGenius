@@ -4,7 +4,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import SmokeCanvas from '@/components/smoke-genius/SmokeCanvas';
 import ControlsPanel from '@/components/smoke-genius/ControlsPanel';
-import type { SimulationPreset } from '@/components/smoke-genius/types';
+import type { SimulationPreset, BlendMode, ParticleSource } from '@/components/smoke-genius/types';
 import { useToast } from "@/hooks/use-toast";
 
 const presets: SimulationPreset[] = [
@@ -16,6 +16,8 @@ const presets: SimulationPreset[] = [
     smokeColor: "#F5F5F5",
     smokeSpeed: 0.02,
     smokeSpread: 2.5,
+    smokeBlendMode: "Normal",
+    smokeSource: "Center",
     isFireEnabled: true,
     fireColor: "#FFA500",
     fireDensity: 1000,
@@ -31,6 +33,8 @@ const presets: SimulationPreset[] = [
     smokeColor: "#A9A9A9",
     smokeSpeed: 0.015,
     smokeSpread: 1.8,
+    smokeBlendMode: "Normal",
+    smokeSource: "Center",
     isFireEnabled: true,
     fireColor: "#FF8C00",
     fireDensity: 800,
@@ -46,6 +50,8 @@ const presets: SimulationPreset[] = [
     smokeColor: "#333333",
     smokeSpeed: 0.05,
     smokeSpread: 4.0,
+    smokeBlendMode: "Normal",
+    smokeSource: "Bottom",
     isFireEnabled: true,
     fireColor: "#FF4500",
     fireDensity: 4500,
@@ -61,8 +67,10 @@ const presets: SimulationPreset[] = [
     smokeColor: "#E0E0E0",
     smokeSpeed: 0.01,
     smokeSpread: 3.5,
+    smokeBlendMode: "Additive",
+    smokeSource: "Bottom",
     isFireEnabled: false,
-    fireColor: "#FFA500", // Default, but disabled
+    fireColor: "#FFA500", 
     fireDensity: 0,
     fireSpeed: 0.01,
     fireSpread: 1.0,
@@ -73,15 +81,17 @@ const presets: SimulationPreset[] = [
     description: "Dense, neon-accented smoke in a dark city.",
     isSmokeEnabled: true,
     smokeDensity: 6000,
-    smokeColor: "#8A2BE2", // BlueViolet
+    smokeColor: "#8A2BE2", 
     smokeSpeed: 0.025,
     smokeSpread: 3.0,
+    smokeBlendMode: "Additive",
+    smokeSource: "Center",
     isFireEnabled: true,
-    fireColor: "#FF00FF", // Magenta
+    fireColor: "#FF00FF", 
     fireDensity: 500,
     fireSpeed: 0.04,
     fireSpread: 1.0,
-    backgroundColor: "#0A0A1E", // Very dark blue
+    backgroundColor: "#0A0A1E", 
   },
 ];
 
@@ -93,6 +103,8 @@ export default function SmokeGeniusPage() {
   const [smokeColor, setSmokeColor] = useState("#F5F5F5");
   const [smokeSpeed, setSmokeSpeed] = useState(0.02);
   const [smokeSpread, setSmokeSpread] = useState(2.5);
+  const [smokeBlendMode, setSmokeBlendMode] = useState<BlendMode>("Normal");
+  const [smokeSource, setSmokeSource] = useState<ParticleSource>("Center");
 
   // Fire States
   const [isFireEnabled, setIsFireEnabled] = useState(true);
@@ -217,6 +229,8 @@ export default function SmokeGeniusPage() {
     setSmokeColor(preset.smokeColor);
     setSmokeSpeed(preset.smokeSpeed);
     setSmokeSpread(preset.smokeSpread);
+    setSmokeBlendMode(preset.smokeBlendMode);
+    setSmokeSource(preset.smokeSource);
 
     setIsFireEnabled(preset.isFireEnabled);
     setFireColor(preset.fireColor);
@@ -226,7 +240,7 @@ export default function SmokeGeniusPage() {
 
     setBackgroundColor(preset.backgroundColor);
     toast({ title: "Preset Applied", description: `"${preset.name}" preset loaded.` });
-  }, [toast]); // All setters are stable, so toast is the only dependency
+  }, [toast]); 
   
   useEffect(() => {
     document.body.style.backgroundColor = backgroundColor;
@@ -247,6 +261,8 @@ export default function SmokeGeniusPage() {
           smokeColor={smokeColor}
           smokeSpeed={smokeSpeed}
           smokeSpread={smokeSpread}
+          smokeBlendMode={smokeBlendMode}
+          smokeSource={smokeSource}
           isFireEnabled={isFireEnabled}
           fireColor={fireColor}
           fireDensity={fireDensity}
@@ -268,6 +284,10 @@ export default function SmokeGeniusPage() {
         setSmokeSpeed={setSmokeSpeed}
         smokeSpread={smokeSpread}
         setSmokeSpread={setSmokeSpread}
+        smokeBlendMode={smokeBlendMode}
+        setSmokeBlendMode={setSmokeBlendMode}
+        smokeSource={smokeSource}
+        setSmokeSource={setSmokeSource}
         
         isFireEnabled={isFireEnabled}
         setIsFireEnabled={setIsFireEnabled}
