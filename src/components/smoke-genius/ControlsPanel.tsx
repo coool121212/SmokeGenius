@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Accordion,
@@ -36,10 +35,11 @@ import {
   FastForward, 
   Expand, 
   Wand2,
-  Blend, // For Blend Mode
-  Target, // For Particle Source: Center
-  MousePointer2, // For Particle Source: Mouse
-  ArrowDownToLine, // For Particle Source: Bottom
+  Blend, 
+  Target, 
+  MousePointer2, 
+  ArrowDownToLine, 
+  LocateFixed, // For Select Particle Source Icon
 } from "lucide-react";
 
 interface ControlsPanelProps {
@@ -114,9 +114,9 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
   
   const blendModeOptions: {value: BlendMode, label: string}[] = [
     { value: "Normal", label: "Normal"},
-    { value: "Additive", label: "Additive"},
-    { value: "Subtractive", label: "Subtractive"},
-    { value: "Multiply", label: "Multiply"},
+    { value: "Additive", label: "Additive (Brighter/Ethereal)"},
+    { value: "Subtractive", label: "Subtractive (Darker)"},
+    { value: "Multiply", label: "Multiply (Intense/Shadow)"},
   ];
 
 
@@ -181,7 +181,7 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                         <Slider id="smokeSpread" min={0.5} max={5} step={0.1} value={[smokeSpread]} onValueChange={(v) => setSmokeSpread(v[0])} aria-label="Smoke particle spread" />
                       </div>
                       
-                      <div className="col-span-1 md:col-span-2">
+                      <div>
                         <div className="flex items-center gap-2 mb-2">
                            <Blend className="w-5 h-5 text-accent" />
                            <Label className="font-semibold text-sm">Blend Mode</Label>
@@ -198,29 +198,30 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                         </Select>
                       </div>
 
-                      <div className="col-span-1 md:col-span-2">
+                      <div>
                         <div className="flex items-center gap-2 mb-2">
-                           <Zap className="w-5 h-5 text-accent" /> {/* Using Zap as a generic source icon leader */}
+                           <LocateFixed className="w-5 h-5 text-accent" /> 
                            <Label className="font-semibold text-sm">Particle Source</Label>
                         </div>
-                        <RadioGroup
+                        <Select
                           value={smokeSource}
                           onValueChange={(value: ParticleSource) => setSmokeSource(value)}
-                          className="grid grid-cols-3 gap-2"
-                          aria-label="Smoke particle source"
+                          
                         >
-                          {particleSourceOptions.map(option => (
-                            <Label
-                              key={option.value}
-                              htmlFor={`smokeSource-${option.value}`}
-                              className={`flex flex-col items-center justify-center gap-1 rounded-md border p-2 hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors ${smokeSource === option.value ? 'bg-accent text-accent-foreground ring-2 ring-primary' : 'bg-background'}`}
-                            >
-                              <RadioGroupItem value={option.value} id={`smokeSource-${option.value}`} className="sr-only" />
-                              <option.icon className="w-5 h-5 mb-1" />
-                              <span className="text-xs">{option.label}</span>
-                            </Label>
-                          ))}
-                        </RadioGroup>
+                          <SelectTrigger aria-label="Smoke particle source">
+                            <SelectValue placeholder="Select particle source" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {particleSourceOptions.map(option => (
+                              <SelectItem key={option.value} value={option.value}>
+                                <div className="flex items-center gap-2">
+                                  <option.icon className="w-4 h-4" />
+                                  {option.label}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </>
                   )}
@@ -368,3 +369,4 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
 };
 
 export default ControlsPanel;
+

@@ -19,3 +19,4 @@ export interface SimulationPreset {
   fireSpread: number;
   backgroundColor: string;
 }
+

@@ -490,7 +490,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
 
 
   useEffect(() => {
-    if (smokeParticlesRef.current && smokeParticlesRef.current.material && THREE_Module) {
+    if (smokeParticlesRef.current && smokeParticlesRef.current.material && THREE_Module && isThreeLoaded) {
       let newBlendingMode = THREE_Module.NormalBlending;
        switch(smokeBlendMode) {
             case "Additive": newBlendingMode = THREE_Module.AdditiveBlending; break;
@@ -546,3 +546,4 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
 };
 
 export default SmokeCanvas;
+
