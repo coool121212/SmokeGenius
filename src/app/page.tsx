@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
@@ -8,11 +7,12 @@ import ControlsPanel from '@/components/smoke-genius/ControlsPanel';
 import { useToast } from "@/hooks/use-toast";
 
 export default function SmokeGeniusPage() {
-  const [particleCount, setParticleCount] = useState(2000); // Increased default
-  const [particleColor, setParticleColor] = useState("#B0B0B0"); // Slightly darker default smoke
+  const [particleCount, setParticleCount] = useState(2000);
+  const [particleColor, setParticleColor] = useState("#B0B0B0");
   const [particleSpeed, setParticleSpeed] = useState(0.02);
-  const [particleSpread, setParticleSpread] = useState(2.5); // Slightly wider default spread
+  const [particleSpread, setParticleSpread] = useState(2.5);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [isFireEnabled, setIsFireEnabled] = useState(true); // New state for fire
 
   const [isRecording, setIsRecording] = useState(false);
   const [recordedVideoUrl, setRecordedVideoUrl] = useState<string | null>(null);
@@ -137,6 +137,7 @@ export default function SmokeGeniusPage() {
           particleSpeed={particleSpeed}
           particleSpread={particleSpread}
           isPlaying={isPlaying}
+          isFireEnabled={isFireEnabled} // Pass fire state
           onCanvasReady={handleCanvasReady}
         />
       </main>
@@ -156,6 +157,8 @@ export default function SmokeGeniusPage() {
         recordedVideoUrl={recordedVideoUrl}
         isPlaying={isPlaying}
         setIsPlaying={setIsPlaying}
+        isFireEnabled={isFireEnabled} // Pass fire state
+        setIsFireEnabled={setIsFireEnabled} // Pass fire setter
       />
     </div>
   );
