@@ -8,6 +8,7 @@ import { debounce } from '@/lib/utils';
 let THREE_Module: typeof THREE | null = null;
 
 interface SmokeCanvasProps {
+  isSmokeEnabled?: boolean;
   smokeDensity?: number;
   smokeColor?: string;
   smokeSpeed?: number;
@@ -31,6 +32,7 @@ const BASE_FIRE_LIFESPAN = 70; // Frames, approx 1.16s at 60fps - slightly incre
 const BASE_SMOKE_LIFESPAN = 180; // Frames, approx 3s at 60fps - slightly increased for longer lasting smoke
 
 const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
+  isSmokeEnabled = true,
   smokeDensity = 2000,
   smokeColor = '#F5F5F5', // Default to whitish smoke as per recent change
   smokeSpeed = 0.02,
@@ -265,6 +267,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     const { geometry: smokeGeo, material: smokeMat } = initParticles(actualSmokeParticleCount, false, smokeColor, smokeSpeed, smokeSpread);
     if (smokeGeo && smokeMat) {
       const smokePoints = new THREE_Module.Points(smokeGeo, smokeMat);
+      smokePoints.visible = isSmokeEnabled;
       scene.add(smokePoints);
       smokeParticlesRef.current = smokePoints;
     }
@@ -287,7 +290,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       // const elapsedTime = clock.getElapsedTime(); // Useful for global time-based effects
 
       if (isPlaying) {
-        if (smokeParticlesRef.current) {
+        if (isSmokeEnabled && smokeParticlesRef.current) {
           const geom = smokeParticlesRef.current.geometry as THREE.BufferGeometry;
           const positions = geom.getAttribute('position') as THREE.BufferAttribute;
           const velocities = geom.getAttribute('velocity') as THREE.BufferAttribute;
@@ -411,7 +414,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       sceneRef.current = null; cameraRef.current = null; rendererRef.current = null;
       smokeParticlesRef.current = null; fireParticlesRef.current = null;
     };
-  }, [isThreeLoaded, actualSmokeParticleCount, actualFireParticleCount, onCanvasReady, initParticles, backgroundColor, fireColor, fireSpeed, fireSpread, isFireEnabled, smokeColor, smokeSpeed, smokeSpread, isPlaying]); 
+  }, [isThreeLoaded, actualSmokeParticleCount, actualFireParticleCount, onCanvasReady, initParticles, backgroundColor, fireColor, fireSpeed, fireSpread, isFireEnabled, smokeColor, smokeSpeed, smokeSpread, isPlaying, isSmokeEnabled]); 
 
 
   useEffect(() => {
@@ -422,6 +425,12 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     if (!isThreeLoaded || !THREE_Module || !fireParticlesRef.current?.geometry) return;
   }, [fireColor, fireSpeed, fireSpread, isThreeLoaded, THREE_Module]);
 
+
+  useEffect(() => {
+    if (smokeParticlesRef.current) {
+      smokeParticlesRef.current.visible = !!isSmokeEnabled;
+    }
+  }, [isSmokeEnabled]);
 
   useEffect(() => {
     if (fireParticlesRef.current) {

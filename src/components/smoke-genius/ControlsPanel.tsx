@@ -35,6 +35,8 @@ import {
 } from "lucide-react";
 
 interface ControlsPanelProps {
+  isSmokeEnabled: boolean;
+  setIsSmokeEnabled: Dispatch<SetStateAction<boolean>>;
   smokeDensity: number;
   setSmokeDensity: Dispatch<SetStateAction<number>>;
   smokeColor: string;
@@ -69,6 +71,7 @@ interface ControlsPanelProps {
 }
 
 const ControlsPanel: React.FC<ControlsPanelProps> = ({
+  isSmokeEnabled, setIsSmokeEnabled,
   smokeDensity, setSmokeDensity,
   smokeColor, setSmokeColor,
   smokeSpeed, setSmokeSpeed,
@@ -109,35 +112,51 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
 
               <TabsContent value="smoke">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center justify-between col-span-1 md:col-span-2">
+                    <div className="flex items-center gap-2">
                       <Cloud className="w-5 h-5 text-accent" />
-                      <Label htmlFor="smokeDensity" className="font-semibold text-sm">Density</Label>
+                      <Label htmlFor="smokeToggle" className="font-semibold text-sm">Enable Smoke</Label>
                     </div>
-                    <Slider id="smokeDensity" min={100} max={8000} step={100} value={[smokeDensity]} onValueChange={(v) => setSmokeDensity(v[0])} aria-label="Smoke particle density"/>
+                    <Switch id="smokeToggle" checked={isSmokeEnabled} onCheckedChange={setIsSmokeEnabled} aria-label="Toggle smoke simulation" />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Palette className="w-5 h-5 text-accent" />
-                      <Label htmlFor="smokeColor" className="font-semibold text-sm">Color</Label>
-                    </div>
-                    <Input id="smokeColor" type="color" value={smokeColor} onChange={(e) => setSmokeColor(e.target.value)} className="w-full h-10 p-1" aria-label="Smoke particle color" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Zap className="w-5 h-5 text-accent" />
-                      <Label htmlFor="smokeSpeed" className="font-semibold text-sm">Speed</Label>
-                    </div>
-                    <Slider id="smokeSpeed" min={0.005} max={0.1} step={0.005} value={[smokeSpeed]} onValueChange={(v) => setSmokeSpeed(v[0])} aria-label="Smoke particle speed" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <MoveHorizontal className="w-5 h-5 text-accent" />
-                      <Label htmlFor="smokeSpread" className="font-semibold text-sm">Spread</Label>
-                    </div>
-                    <Slider id="smokeSpread" min={0.5} max={5} step={0.1} value={[smokeSpread]} onValueChange={(v) => setSmokeSpread(v[0])} aria-label="Smoke particle spread" />
-                  </div>
+                  {isSmokeEnabled && (
+                    <>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <BarChartBig className="w-5 h-5 text-accent" /> {/* Re-using BarChartBig for density */}
+                          <Label htmlFor="smokeDensity" className="font-semibold text-sm">Density</Label>
+                        </div>
+                        <Slider id="smokeDensity" min={100} max={8000} step={100} value={[smokeDensity]} onValueChange={(v) => setSmokeDensity(v[0])} aria-label="Smoke particle density"/>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Palette className="w-5 h-5 text-accent" />
+                          <Label htmlFor="smokeColor" className="font-semibold text-sm">Color</Label>
+                        </div>
+                        <Input id="smokeColor" type="color" value={smokeColor} onChange={(e) => setSmokeColor(e.target.value)} className="w-full h-10 p-1" aria-label="Smoke particle color" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Zap className="w-5 h-5 text-accent" />
+                          <Label htmlFor="smokeSpeed" className="font-semibold text-sm">Speed</Label>
+                        </div>
+                        <Slider id="smokeSpeed" min={0.005} max={0.1} step={0.005} value={[smokeSpeed]} onValueChange={(v) => setSmokeSpeed(v[0])} aria-label="Smoke particle speed" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <MoveHorizontal className="w-5 h-5 text-accent" />
+                          <Label htmlFor="smokeSpread" className="font-semibold text-sm">Spread</Label>
+                        </div>
+                        <Slider id="smokeSpread" min={0.5} max={5} step={0.1} value={[smokeSpread]} onValueChange={(v) => setSmokeSpread(v[0])} aria-label="Smoke particle spread" />
+                      </div>
+                    </>
+                  )}
                 </div>
+                {isSmokeEnabled && (
+                 <p className="mt-3 text-center text-xs text-muted-foreground col-span-1 md:col-span-2">
+                    Smoke simulation parameters affect visual appearance and performance.
+                </p>
+                )}
               </TabsContent>
 
               <TabsContent value="fire">

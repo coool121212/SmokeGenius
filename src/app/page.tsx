@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function SmokeGeniusPage() {
   // Smoke States
+  const [isSmokeEnabled, setIsSmokeEnabled] = useState(true);
   const [smokeDensity, setSmokeDensity] = useState(2000);
   const [smokeColor, setSmokeColor] = useState("#F5F5F5"); // Default to whitish smoke
   const [smokeSpeed, setSmokeSpeed] = useState(0.02);
@@ -148,6 +149,7 @@ export default function SmokeGeniusPage() {
     <div className="flex flex-col h-screen w-screen overflow-hidden text-foreground">
       <main className="flex-grow relative">
         <SmokeCanvas
+          isSmokeEnabled={isSmokeEnabled}
           smokeDensity={smokeDensity}
           smokeColor={smokeColor}
           smokeSpeed={smokeSpeed}
@@ -163,6 +165,8 @@ export default function SmokeGeniusPage() {
         />
       </main>
       <ControlsPanel
+        isSmokeEnabled={isSmokeEnabled}
+        setIsSmokeEnabled={setIsSmokeEnabled}
         smokeDensity={smokeDensity}
         setSmokeDensity={setSmokeDensity}
         smokeColor={smokeColor}
