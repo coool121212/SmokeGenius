@@ -1,7 +1,7 @@
 "use client";
 
 import type * as THREE from 'three';
-import { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react'; // Added React and useState
 // Import THREE dynamically if it's large or only used client-side
 // For now, direct import assuming 'three' is managed well by bundler
 let THREE_Module: typeof THREE | null = null;
@@ -30,7 +30,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const particlesRef = useRef<THREE.Points | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
-  const [isThreeLoaded, setIsThreeLoaded] = React.useState(false);
+  const [isThreeLoaded, setIsThreeLoaded] = useState(false);
 
   useEffect(() => {
     import('three').then(three => {
@@ -168,7 +168,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       rendererRef.current = null;
       particlesRef.current = null;
     };
-  }, [isThreeLoaded, particleCount, particleSpread, smokeParticleTexture, onCanvasReady]); // Re-init if these fundamental props change
+  }, [isThreeLoaded, particleCount, particleSpread, smokeParticleTexture, onCanvasReady, particleSpeed, isPlaying, particleColor]); // Added particleSpeed, isPlaying, particleColor to dependency array
 
   // Update material color when prop changes
   useEffect(() => {
