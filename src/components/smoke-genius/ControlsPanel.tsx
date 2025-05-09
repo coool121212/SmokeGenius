@@ -2,8 +2,9 @@
 "use client";
 
 import type { Dispatch, SetStateAction, MutableRefObject } from 'react';
+import type { SimulationPreset } from './types';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -31,7 +32,8 @@ import {
   PaintBucket, // For background color
   BarChartBig, // For density/intensity
   FastForward, // For fire speed
-  Expand // For fire spread
+  Expand, // For fire spread
+  Wand2 // For presets
 } from "lucide-react";
 
 interface ControlsPanelProps {
@@ -68,6 +70,8 @@ interface ControlsPanelProps {
   isPlaying: boolean;
   setIsPlaying: Dispatch<SetStateAction<boolean>>;
   mediaRecorderRef: MutableRefObject<MediaRecorder | null>;
+  presets: SimulationPreset[];
+  onApplyPreset: (preset: SimulationPreset) => void;
 }
 
 const ControlsPanel: React.FC<ControlsPanelProps> = ({
@@ -87,7 +91,8 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
 
   isRecording, onStartRecording, onStopRecording, onDownloadRecording, recordedVideoUrl,
   isPlaying, setIsPlaying,
-  mediaRecorderRef
+  mediaRecorderRef,
+  presets, onApplyPreset
 }) => {
   return (
     <Card className="fixed bottom-0 left-0 right-0 m-2 md:m-4 shadow-2xl border-border bg-card/95 backdrop-blur-sm z-50 max-w-4xl mx-auto">
@@ -98,16 +103,16 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
               <CardTitle className="text-lg flex items-center">
                 <Settings2 className="mr-2 h-5 w-5 text-primary" /> Simulation Controls
               </CardTitle>
-              {/* AccordionTrigger will add its own ChevronDown icon here */}
             </CardHeader>
           </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4 pt-0"> {/* Apply padding for the content area */}
+          <AccordionContent className="px-4 pb-4 pt-0">
             <Tabs defaultValue="smoke" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-4">
+              <TabsList className="grid w-full grid-cols-5 mb-4"> {/* Updated from 4 to 5 columns */}
                 <TabsTrigger value="smoke">Smoke</TabsTrigger>
                 <TabsTrigger value="fire">Fire</TabsTrigger>
                 <TabsTrigger value="scene">Scene</TabsTrigger>
                 <TabsTrigger value="media">Media</TabsTrigger>
+                <TabsTrigger value="presets">Presets</TabsTrigger> {/* New Tab */}
               </TabsList>
 
               <TabsContent value="smoke">
@@ -123,7 +128,7 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                     <>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <BarChartBig className="w-5 h-5 text-accent" /> {/* Re-using BarChartBig for density */}
+                          <BarChartBig className="w-5 h-5 text-accent" />
                           <Label htmlFor="smokeDensity" className="font-semibold text-sm">Density</Label>
                         </div>
                         <Slider id="smokeDensity" min={100} max={8000} step={100} value={[smokeDensity]} onValueChange={(v) => setSmokeDensity(v[0])} aria-label="Smoke particle density"/>
@@ -253,6 +258,39 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                   </div>
                 </div>
               </TabsContent>
+              
+              <TabsContent value="presets">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-lg">
+                      <Wand2 className="mr-2 h-5 w-5 text-primary" />
+                      Simulation Presets
+                    </CardTitle>
+                    <CardDescription>
+                      Select a preset to quickly configure the simulation.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {presets.map((preset) => (
+                      <Button
+                        key={preset.name}
+                        variant="outline"
+                        onClick={() => onApplyPreset(preset)}
+                        className="flex flex-col items-start p-3 h-auto text-left shadow-sm hover:shadow-md transition-shadow"
+                        aria-label={`Apply ${preset.name} preset`}
+                      >
+                        <span className="font-semibold text-sm">{preset.name}</span>
+                        {preset.description && (
+                          <span className="text-xs text-muted-foreground mt-1 leading-tight">
+                            {preset.description}
+                          </span>
+                        )}
+                      </Button>
+                    ))}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
             </Tabs>
           </AccordionContent>
         </AccordionItem>

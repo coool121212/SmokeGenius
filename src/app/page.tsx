@@ -4,25 +4,105 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import SmokeCanvas from '@/components/smoke-genius/SmokeCanvas';
 import ControlsPanel from '@/components/smoke-genius/ControlsPanel';
+import type { SimulationPreset } from '@/components/smoke-genius/types';
 import { useToast } from "@/hooks/use-toast";
+
+const presets: SimulationPreset[] = [
+  {
+    name: "Default",
+    description: "The standard starting simulation settings.",
+    isSmokeEnabled: true,
+    smokeDensity: 2000,
+    smokeColor: "#F5F5F5",
+    smokeSpeed: 0.02,
+    smokeSpread: 2.5,
+    isFireEnabled: true,
+    fireColor: "#FFA500",
+    fireDensity: 1000,
+    fireSpeed: 0.03,
+    fireSpread: 1.5,
+    backgroundColor: "#000000",
+  },
+  {
+    name: "Gentle Campfire",
+    description: "A calm campfire with light, greyish smoke.",
+    isSmokeEnabled: true,
+    smokeDensity: 1500,
+    smokeColor: "#A9A9A9",
+    smokeSpeed: 0.015,
+    smokeSpread: 1.8,
+    isFireEnabled: true,
+    fireColor: "#FF8C00",
+    fireDensity: 800,
+    fireSpeed: 0.02,
+    fireSpread: 1.2,
+    backgroundColor: "#101010",
+  },
+  {
+    name: "Volcanic Eruption",
+    description: "Intense, dark smoke and fiery lava-like effects.",
+    isSmokeEnabled: true,
+    smokeDensity: 7000,
+    smokeColor: "#333333",
+    smokeSpeed: 0.05,
+    smokeSpread: 4.0,
+    isFireEnabled: true,
+    fireColor: "#FF4500",
+    fireDensity: 4500,
+    fireSpeed: 0.06,
+    fireSpread: 3.0,
+    backgroundColor: "#201008",
+  },
+  {
+    name: "Mystic Fog",
+    description: "Dense, ethereal light grey fog, no fire.",
+    isSmokeEnabled: true,
+    smokeDensity: 5000,
+    smokeColor: "#E0E0E0",
+    smokeSpeed: 0.01,
+    smokeSpread: 3.5,
+    isFireEnabled: false,
+    fireColor: "#FFA500", // Default, but disabled
+    fireDensity: 0,
+    fireSpeed: 0.01,
+    fireSpread: 1.0,
+    backgroundColor: "#2C3E50",
+  },
+    {
+    name: "Cyberpunk Smog",
+    description: "Dense, neon-accented smoke in a dark city.",
+    isSmokeEnabled: true,
+    smokeDensity: 6000,
+    smokeColor: "#8A2BE2", // BlueViolet
+    smokeSpeed: 0.025,
+    smokeSpread: 3.0,
+    isFireEnabled: true,
+    fireColor: "#FF00FF", // Magenta
+    fireDensity: 500,
+    fireSpeed: 0.04,
+    fireSpread: 1.0,
+    backgroundColor: "#0A0A1E", // Very dark blue
+  },
+];
+
 
 export default function SmokeGeniusPage() {
   // Smoke States
   const [isSmokeEnabled, setIsSmokeEnabled] = useState(true);
   const [smokeDensity, setSmokeDensity] = useState(2000);
-  const [smokeColor, setSmokeColor] = useState("#F5F5F5"); // Default to whitish smoke
+  const [smokeColor, setSmokeColor] = useState("#F5F5F5");
   const [smokeSpeed, setSmokeSpeed] = useState(0.02);
   const [smokeSpread, setSmokeSpread] = useState(2.5);
 
   // Fire States
   const [isFireEnabled, setIsFireEnabled] = useState(true);
-  const [fireColor, setFireColor] = useState("#FFA500"); // Default orange for fire
-  const [fireDensity, setFireDensity] = useState(1000); // Default fire particle count
-  const [fireSpeed, setFireSpeed] = useState(0.03); // Default fire speed
-  const [fireSpread, setFireSpread] = useState(1.5); // Default fire spread
+  const [fireColor, setFireColor] = useState("#FFA500");
+  const [fireDensity, setFireDensity] = useState(1000);
+  const [fireSpeed, setFireSpeed] = useState(0.03);
+  const [fireSpread, setFireSpread] = useState(1.5);
 
   // Scene State
-  const [backgroundColor, setBackgroundColor] = useState("#000000"); // Default background to black
+  const [backgroundColor, setBackgroundColor] = useState("#000000");
 
   // Playback & Recording States
   const [isPlaying, setIsPlaying] = useState(true);
@@ -130,18 +210,31 @@ export default function SmokeGeniusPage() {
       toast({ title: "No Recording", description: "No video available to download.", variant: "destructive" });
     }
   }, [recordedVideoUrl, toast]);
+
+  const applyPreset = useCallback((preset: SimulationPreset) => {
+    setIsSmokeEnabled(preset.isSmokeEnabled);
+    setSmokeDensity(preset.smokeDensity);
+    setSmokeColor(preset.smokeColor);
+    setSmokeSpeed(preset.smokeSpeed);
+    setSmokeSpread(preset.smokeSpread);
+
+    setIsFireEnabled(preset.isFireEnabled);
+    setFireColor(preset.fireColor);
+    setFireDensity(preset.fireDensity);
+    setFireSpeed(preset.fireSpeed);
+    setFireSpread(preset.fireSpread);
+
+    setBackgroundColor(preset.backgroundColor);
+    toast({ title: "Preset Applied", description: `"${preset.name}" preset loaded.` });
+  }, [toast]); // All setters are stable, so toast is the only dependency
   
   useEffect(() => {
-    // Apply background color to the body for full page effect
     document.body.style.backgroundColor = backgroundColor;
-    // Cleanup
     let currentUrl = recordedVideoUrl;
     return () => {
       if (currentUrl) {
         URL.revokeObjectURL(currentUrl);
       }
-      // Reset body style if component unmounts, or set to a default if needed
-      // document.body.style.backgroundColor = ''; // Or your app's default
     };
   }, [recordedVideoUrl, backgroundColor]);
 
@@ -197,9 +290,10 @@ export default function SmokeGeniusPage() {
         recordedVideoUrl={recordedVideoUrl}
         isPlaying={isPlaying}
         setIsPlaying={setIsPlaying}
-        mediaRecorderRef={mediaRecorderRef} // Pass ref for download button text
+        mediaRecorderRef={mediaRecorderRef}
+        presets={presets}
+        onApplyPreset={applyPreset}
       />
     </div>
   );
 }
-
