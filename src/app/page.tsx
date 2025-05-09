@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
@@ -7,13 +6,24 @@ import ControlsPanel from '@/components/smoke-genius/ControlsPanel';
 import { useToast } from "@/hooks/use-toast";
 
 export default function SmokeGeniusPage() {
-  const [particleCount, setParticleCount] = useState(2000);
-  const [particleColor, setParticleColor] = useState("#B0B0B0");
-  const [particleSpeed, setParticleSpeed] = useState(0.02);
-  const [particleSpread, setParticleSpread] = useState(2.5);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [isFireEnabled, setIsFireEnabled] = useState(true); // New state for fire
+  // Smoke States
+  const [smokeDensity, setSmokeDensity] = useState(2000);
+  const [smokeColor, setSmokeColor] = useState("#1A1A1A"); // Default to dark grey/black
+  const [smokeSpeed, setSmokeSpeed] = useState(0.02);
+  const [smokeSpread, setSmokeSpread] = useState(2.5);
 
+  // Fire States
+  const [isFireEnabled, setIsFireEnabled] = useState(true);
+  const [fireColor, setFireColor] = useState("#FFA500"); // Default orange for fire
+  const [fireDensity, setFireDensity] = useState(1000); // Default fire particle count
+  const [fireSpeed, setFireSpeed] = useState(0.03); // Default fire speed
+  const [fireSpread, setFireSpread] = useState(1.5); // Default fire spread
+
+  // Scene State
+  const [backgroundColor, setBackgroundColor] = useState("#333333"); // Default background
+
+  // Playback & Recording States
+  const [isPlaying, setIsPlaying] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [recordedVideoUrl, setRecordedVideoUrl] = useState<string | null>(null);
   
@@ -120,36 +130,61 @@ export default function SmokeGeniusPage() {
   }, [recordedVideoUrl, toast]);
   
   useEffect(() => {
+    // Apply background color to the body for full page effect
+    document.body.style.backgroundColor = backgroundColor;
+    // Cleanup
     let currentUrl = recordedVideoUrl;
     return () => {
       if (currentUrl) {
         URL.revokeObjectURL(currentUrl);
       }
+      // Reset body style if component unmounts, or set to a default if needed
+      // document.body.style.backgroundColor = ''; // Or your app's default
     };
-  }, [recordedVideoUrl]);
+  }, [recordedVideoUrl, backgroundColor]);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-background text-foreground">
+    <div className="flex flex-col h-screen w-screen overflow-hidden text-foreground">
       <main className="flex-grow relative">
         <SmokeCanvas
-          particleCount={particleCount}
-          particleColor={particleColor}
-          particleSpeed={particleSpeed}
-          particleSpread={particleSpread}
+          smokeDensity={smokeDensity}
+          smokeColor={smokeColor}
+          smokeSpeed={smokeSpeed}
+          smokeSpread={smokeSpread}
+          isFireEnabled={isFireEnabled}
+          fireColor={fireColor}
+          fireDensity={fireDensity}
+          fireSpeed={fireSpeed}
+          fireSpread={fireSpread}
+          backgroundColor={backgroundColor}
           isPlaying={isPlaying}
-          isFireEnabled={isFireEnabled} // Pass fire state
           onCanvasReady={handleCanvasReady}
         />
       </main>
       <ControlsPanel
-        particleCount={particleCount}
-        setParticleCount={setParticleCount}
-        particleColor={particleColor}
-        setParticleColor={setParticleColor}
-        particleSpeed={particleSpeed}
-        setParticleSpeed={setParticleSpeed}
-        particleSpread={particleSpread}
-        setParticleSpread={setParticleSpread}
+        smokeDensity={smokeDensity}
+        setSmokeDensity={setSmokeDensity}
+        smokeColor={smokeColor}
+        setSmokeColor={setSmokeColor}
+        smokeSpeed={smokeSpeed}
+        setSmokeSpeed={setSmokeSpeed}
+        smokeSpread={smokeSpread}
+        setSmokeSpread={setSmokeSpread}
+        
+        isFireEnabled={isFireEnabled}
+        setIsFireEnabled={setIsFireEnabled}
+        fireColor={fireColor}
+        setFireColor={setFireColor}
+        fireDensity={fireDensity}
+        setFireDensity={setFireDensity}
+        fireSpeed={fireSpeed}
+        setFireSpeed={setFireSpeed}
+        fireSpread={fireSpread}
+        setFireSpread={setFireSpread}
+
+        backgroundColor={backgroundColor}
+        setBackgroundColor={setBackgroundColor}
+
         isRecording={isRecording}
         onStartRecording={handleStartRecording}
         onStopRecording={handleStopRecording}
@@ -157,10 +192,8 @@ export default function SmokeGeniusPage() {
         recordedVideoUrl={recordedVideoUrl}
         isPlaying={isPlaying}
         setIsPlaying={setIsPlaying}
-        isFireEnabled={isFireEnabled} // Pass fire state
-        setIsFireEnabled={setIsFireEnabled} // Pass fire setter
+        mediaRecorderRef={mediaRecorderRef} // Pass ref for download button text
       />
     </div>
   );
 }
-

@@ -1,4 +1,3 @@
-
 "use client";
 
 import type * as THREE from 'three';
@@ -8,27 +7,42 @@ import { debounce } from '@/lib/utils';
 let THREE_Module: typeof THREE | null = null;
 
 interface SmokeCanvasProps {
-  particleCount?: number;
-  particleColor?: string;
-  particleSpeed?: number;
-  particleSpread?: number;
+  smokeDensity?: number;
+  smokeColor?: string;
+  smokeSpeed?: number;
+  smokeSpread?: number;
+  
+  isFireEnabled?: boolean;
+  fireColor?: string;
+  fireDensity?: number;
+  fireSpeed?: number;
+  fireSpread?: number;
+
+  backgroundColor?: string;
   isPlaying?: boolean;
-  isFireEnabled?: boolean; // New prop
   onCanvasReady?: (canvas: HTMLCanvasElement) => void;
 }
 
-const MAX_PARTICLES = 10000;
-const FIRE_PARTICLE_COUNT_RATIO = 0.75;
-const BASE_FIRE_LIFESPAN = 60;
-const BASE_SMOKE_LIFESPAN = 150;
+const MAX_SMOKE_PARTICLES = 8000;
+const MAX_FIRE_PARTICLES = 5000;
+
+const BASE_FIRE_LIFESPAN = 60; // Frames, approx 1 second at 60fps
+const BASE_SMOKE_LIFESPAN = 150; // Frames, approx 2.5 seconds at 60fps
 
 const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
-  particleCount = 1000,
-  particleColor = '#CCCCCC',
-  particleSpeed = 0.02,
-  particleSpread = 2,
+  smokeDensity = 2000,
+  smokeColor = '#1A1A1A',
+  smokeSpeed = 0.02,
+  smokeSpread = 2,
+  
+  isFireEnabled = true,
+  fireColor = '#FFA500',
+  fireDensity = 1000,
+  fireSpeed = 0.03,
+  fireSpread = 1.5,
+
+  backgroundColor = '#333333',
   isPlaying = true,
-  isFireEnabled = true, // Default to true
   onCanvasReady,
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -44,8 +58,8 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   const [isThreeLoaded, setIsThreeLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const actualParticleCount = Math.min(particleCount, MAX_PARTICLES);
-  const fireParticleCount = Math.floor(actualParticleCount * FIRE_PARTICLE_COUNT_RATIO);
+  const actualSmokeParticleCount = Math.min(smokeDensity, MAX_SMOKE_PARTICLES);
+  const actualFireParticleCount = Math.min(fireDensity, MAX_FIRE_PARTICLES);
 
   useEffect(() => {
     import('three').then(three => {
@@ -59,6 +73,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     });
   }, []);
 
+  // Smoke particle texture (dynamic color update is handled in shader/attributes)
   const smokeParticleTexture = useMemo(() => {
     if (!THREE_Module || !isThreeLoaded) return null;
     const canvas = document.createElement('canvas');
@@ -71,16 +86,18 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       canvas.width / 2, canvas.height / 2, 0,
       canvas.width / 2, canvas.height / 2, canvas.width / 2
     );
-    gradient.addColorStop(0, 'rgba(200,200,200,0.6)');
-    gradient.addColorStop(0.3, 'rgba(200,200,200,0.4)');
-    gradient.addColorStop(1, 'rgba(200,200,200,0)');
+    // Generic white gradient, color will be applied via vertex colors
+    gradient.addColorStop(0, 'rgba(255,255,255,0.7)');
+    gradient.addColorStop(0.3, 'rgba(255,255,255,0.5)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');
 
     context.fillStyle = gradient;
     context.fillRect(0, 0, canvas.width, canvas.height);
     return new THREE_Module.CanvasTexture(canvas);
   }, [isThreeLoaded]);
 
-  const fireParticleTexture = useMemo(() => {
+  // Fire particle texture (base texture, color variations handled in shader/attributes)
+   const fireParticleTexture = useMemo(() => {
     if (!THREE_Module || !isThreeLoaded) return null;
     const canvas = document.createElement('canvas');
     canvas.width = 128;
@@ -92,10 +109,11 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       canvas.width / 2, canvas.height / 2, 0,
       canvas.width / 2, canvas.height / 2, canvas.width / 2
     );
-    gradient.addColorStop(0, 'rgba(255,220,100,1)');
-    gradient.addColorStop(0.2, 'rgba(255,165,0,0.8)');
-    gradient.addColorStop(0.5, 'rgba(255,69,0,0.5)');
-    gradient.addColorStop(1, 'rgba(255,0,0,0)');
+    // Base bright texture for fire, specific coloring via vertex attributes
+    gradient.addColorStop(0, 'rgba(255,220,150,1)');
+    gradient.addColorStop(0.2, 'rgba(255,180,80,0.8)');
+    gradient.addColorStop(0.5, 'rgba(255,100,50,0.5)');
+    gradient.addColorStop(1, 'rgba(255,50,0,0)');
     
     context.fillStyle = gradient;
     context.fillRect(0, 0, canvas.width, canvas.height);
@@ -106,8 +124,9 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   const initParticles = useCallback((
     count: number,
     isFire: boolean,
-    baseSpeed: number,
-    spread: number
+    colorVal: string,
+    speedVal: number,
+    spreadVal: number
   ) => {
     if (!THREE_Module) return { geometry: null, material: null };
 
@@ -119,45 +138,53 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     const sizes = new Float32Array(count);
     const lives = new Float32Array(count);
 
-    const baseColor = new THREE_Module.Color();
+    const baseColor = new THREE_Module.Color(colorVal);
 
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
       
       if (isFire) {
-        positions[i3] = (Math.random() - 0.5) * spread * 0.5; 
-        positions[i3 + 1] = -2.5 + (Math.random() - 0.5) * 0.2; 
-        positions[i3 + 2] = (Math.random() - 0.5) * spread * 0.5;
-      } else {
-        positions[i3] = (Math.random() - 0.5) * spread * 2;
-        positions[i3 + 1] = (Math.random() - 0.5) * 0.5 - 2; 
-        positions[i3 + 2] = (Math.random() - 0.5) * spread;
+        positions[i3] = (Math.random() - 0.5) * spreadVal * 0.7; 
+        positions[i3 + 1] = -2.5 + (Math.random() - 0.5) * 0.3; 
+        positions[i3 + 2] = (Math.random() - 0.5) * spreadVal * 0.7;
+      } else { // Smoke
+        positions[i3] = (Math.random() - 0.5) * spreadVal * 1.5;
+        positions[i3 + 1] = (Math.random() - 0.5) * 0.5 - 2.0; 
+        positions[i3 + 2] = (Math.random() - 0.5) * spreadVal;
       }
       
       if (isFire) {
-        velocities[i3] = (Math.random() - 0.5) * 0.01 * spread * 0.5;
-        velocities[i3 + 1] = (Math.random() * baseSpeed * 2.5) + baseSpeed * 1.5; 
-        velocities[i3 + 2] = (Math.random() - 0.5) * 0.01 * spread * 0.5;
-      } else {
-        velocities[i3] = (Math.random() - 0.5) * 0.02 * spread; 
-        velocities[i3 + 1] = Math.random() * baseSpeed + 0.01;
-        velocities[i3 + 2] = (Math.random() - 0.5) * 0.02 * spread;
-      }
+        velocities[i3] = (Math.random() - 0.5) * 0.015 * spreadVal;
+        velocities[i3 + 1] = (Math.random() * speedVal * 2.0) + speedVal * 1.2; 
+        velocities[i3 + 2] = (Math.random() - 0.5) * 0.015 * spreadVal;
+        
+        // Fire color will be derived from fireColor prop + life cycle variation
+        const fireHsl = { h: 0, s: 0, l: 0 };
+        baseColor.getHSL(fireHsl);
+        const variedColor = new THREE_Module.Color().setHSL(
+            fireHsl.h + (Math.random() -0.5) * 0.1, // slight hue variation
+            Math.max(0.7, fireHsl.s - Math.random() * 0.2), // high saturation
+            Math.min(0.8, fireHsl.l + Math.random() * 0.1) // brightness variation
+        );
+        colors[i3] = variedColor.r;
+        colors[i3 + 1] = variedColor.g;
+        colors[i3 + 2] = variedColor.b;
 
-      if (isFire) {
-        baseColor.setHSL(Math.random() * 0.1 + 0.05, 1, 0.6 + Math.random()*0.2); 
-        alphas[i] = 0.7 + Math.random() * 0.3;
-        sizes[i] = 0.3 + Math.random() * 0.4; 
-        lives[i] = Math.random() * BASE_FIRE_LIFESPAN * 0.5 + BASE_FIRE_LIFESPAN * 0.5;
-      } else {
-        baseColor.set(particleColor); 
-        alphas[i] = 0.3 + Math.random() * 0.4;
-        sizes[i] = 0.4 + Math.random() * 0.3; 
+        alphas[i] = 0.6 + Math.random() * 0.4;
+        sizes[i] = 0.25 + Math.random() * 0.35 * (spreadVal / 1.5); 
+        lives[i] = Math.random() * BASE_FIRE_LIFESPAN * 0.6 + BASE_FIRE_LIFESPAN * 0.4;
+      } else { // Smoke
+        velocities[i3] = (Math.random() - 0.5) * 0.025 * spreadVal; 
+        velocities[i3 + 1] = Math.random() * speedVal + 0.01;
+        velocities[i3 + 2] = (Math.random() - 0.5) * 0.025 * spreadVal;
+
+        colors[i3] = baseColor.r;
+        colors[i3 + 1] = baseColor.g;
+        colors[i3 + 2] = baseColor.b;
+        alphas[i] = 0.25 + Math.random() * 0.35;
+        sizes[i] = 0.35 + Math.random() * 0.3 * (spreadVal / 2.0) ; 
         lives[i] = Math.random() * BASE_SMOKE_LIFESPAN * 0.5 + BASE_SMOKE_LIFESPAN * 0.5;
       }
-      colors[i3] = baseColor.r;
-      colors[i3 + 1] = baseColor.g;
-      colors[i3 + 2] = baseColor.b;
     }
 
     geometry.setAttribute('position', new THREE_Module.BufferAttribute(positions, 3));
@@ -175,7 +202,11 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       vertexColors: true,
       sizeAttenuation: true,
     });
+    
+    // Shader modification to use custom attributes for size and alpha per particle
+    // And to correctly apply pixelRatio for consistent sizing
     material.onBeforeCompile = shader => {
+        const pixelRatio = window.devicePixelRatio || 1;
         shader.vertexShader = `
           attribute float size;
           attribute float alpha;
@@ -190,17 +221,18 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
            vAlpha = alpha;
            vColor = customColor;
           `
-        ).replace(
-          `gl_PointSize = size;`,
-          `gl_PointSize = size * 그냥pixelRatioPlaceholder;`
-        ).replace(
-          `#include <project_vertex>`,
-          `
+        ).replace( // Ensure this specific placeholder is targeted if it exists, otherwise use a general approach
+          /gl_PointSize = size;/, // More robust regex to find default size assignment
+          `gl_PointSize = size * ${pixelRatio.toFixed(1)};` 
+        ).replace( // For perspective correct sizing
+           `#include <project_vertex>`,
+           `
             vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );
             gl_Position = projectionMatrix * mvPosition;
-            gl_PointSize = size * ( 그냥pixelRatioPlaceholder / -mvPosition.z );
-          `
-          );
+            // Perspective-correct point size
+            gl_PointSize = size * ( ${pixelRatio.toFixed(1)} / -mvPosition.z );
+           `
+        );
 
         shader.fragmentShader = `
           varying float vAlpha;
@@ -212,11 +244,11 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
         );
       };
 
-
     return { geometry, material };
-  }, [THREE_Module, smokeParticleTexture, fireParticleTexture, particleColor]);
+  }, [THREE_Module, smokeParticleTexture, fireParticleTexture]);
 
 
+  // Main initialization effect
   useEffect(() => {
     if (!mountRef.current || !isThreeLoaded || !THREE_Module || !smokeParticleTexture || !fireParticleTexture) return;
 
@@ -227,53 +259,33 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     camera.position.z = 5;
     cameraRef.current = camera;
 
-    const renderer = new THREE_Module.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = new THREE_Module.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
     renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
-    const pixelRatio = window.devicePixelRatio;
-    renderer.setPixelRatio(pixelRatio);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setClearColor(new THREE_Module.Color(backgroundColor)); // Initial background color
     mountRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
+
     if (onCanvasReady) {
       onCanvasReady(renderer.domElement);
     }
     
-    const { geometry: smokeGeo, material: smokeMat } = initParticles(actualParticleCount, false, particleSpeed, particleSpread);
+    // Initialize Smoke Particles
+    const { geometry: smokeGeo, material: smokeMat } = initParticles(actualSmokeParticleCount, false, smokeColor, smokeSpeed, smokeSpread);
     if (smokeGeo && smokeMat) {
-      if (smokeMat.onBeforeCompile) {
-        smokeMat.onBeforeCompile = shader => {
-           shader.vertexShader = shader.vertexShader.replace(
-            `gl_PointSize = size * 그냥pixelRatioPlaceholder;`,
-            `gl_PointSize = size * ${pixelRatio.toFixed(1)};`
-          ).replace(
-            `gl_PointSize = size * ( 그냥pixelRatioPlaceholder / -mvPosition.z );`,
-            `gl_PointSize = size * ( ${pixelRatio.toFixed(1)} / -mvPosition.z );`
-          );
-        };
-      }
       const smokePoints = new THREE_Module.Points(smokeGeo, smokeMat);
       scene.add(smokePoints);
       smokeParticlesRef.current = smokePoints;
     }
 
-    const { geometry: fireGeo, material: fireMat } = initParticles(fireParticleCount, true, particleSpeed * 2, particleSpread * 0.5);
+    // Initialize Fire Particles
+    const { geometry: fireGeo, material: fireMat } = initParticles(actualFireParticleCount, true, fireColor, fireSpeed, fireSpread);
     if (fireGeo && fireMat) {
-       if (fireMat.onBeforeCompile) {
-        fireMat.onBeforeCompile = shader => {
-          shader.vertexShader = shader.vertexShader.replace(
-            `gl_PointSize = size * 그냥pixelRatioPlaceholder;`,
-            `gl_PointSize = size * ${pixelRatio.toFixed(1)};`
-          ).replace(
-            `gl_PointSize = size * ( 그냥pixelRatioPlaceholder / -mvPosition.z );`,
-            `gl_PointSize = size * ( ${pixelRatio.toFixed(1)} / -mvPosition.z );`
-          );
-        };
-      }
       const firePoints = new THREE_Module.Points(fireGeo, fireMat);
-      firePoints.visible = isFireEnabled; // Set initial visibility
+      firePoints.visible = isFireEnabled;
       scene.add(firePoints);
       fireParticlesRef.current = firePoints;
     }
-
 
     const clock = new THREE_Module.Clock();
 
@@ -281,7 +293,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
       
       animationFrameIdRef.current = requestAnimationFrame(animate);
-      const delta = clock.getDelta();
+      const delta = clock.getDelta(); // Time elapsed since last frame
 
       if (isPlaying) {
         // Animate Smoke
@@ -293,40 +305,34 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
           const sizes = geom.getAttribute('size') as THREE.BufferAttribute;
           const lives = geom.getAttribute('life') as THREE.BufferAttribute;
           const colors = geom.getAttribute('customColor') as THREE.BufferAttribute;
+          const currentSmokeColor = new THREE_Module.Color(smokeColor);
 
           for (let i = 0; i < positions.count; i++) {
-            lives.setX(i, lives.getX(i) - delta * 15); 
+            lives.setX(i, lives.getX(i) - delta * 15); // Decrease life
 
-            if (lives.getX(i) <= 0) {
-              positions.setXYZ(i, (Math.random() - 0.5) * particleSpread * 2, (Math.random() - 0.5) * 0.5 - 2.5, (Math.random() - 0.5) * particleSpread);
-              velocities.setXYZ(i, (Math.random() - 0.5) * 0.02 * particleSpread, Math.random() * particleSpeed + 0.01, (Math.random() - 0.5) * 0.02 * particleSpread);
+            if (lives.getX(i) <= 0) { // Particle died, reset it
+              positions.setXYZ(i, (Math.random() - 0.5) * smokeSpread * 1.5, (Math.random() - 0.5) * 0.5 - 2.0, (Math.random() - 0.5) * smokeSpread);
+              velocities.setXYZ(i, (Math.random() - 0.5) * 0.025 * smokeSpread, Math.random() * smokeSpeed + 0.01, (Math.random() - 0.5) * 0.025 * smokeSpread);
               lives.setX(i, Math.random() * BASE_SMOKE_LIFESPAN * 0.5 + BASE_SMOKE_LIFESPAN * 0.5);
-              alphas.setX(i, 0.3 + Math.random() * 0.4);
-              sizes.setX(i, 0.4 + Math.random() * 0.3);
-              const baseSmokeColor = new THREE_Module.Color(particleColor);
-              colors.setXYZ(i, baseSmokeColor.r, baseSmokeColor.g, baseSmokeColor.b);
-
-            } else {
+              alphas.setX(i, 0.25 + Math.random() * 0.35);
+              sizes.setX(i, (0.35 + Math.random() * 0.3) * (smokeSpread / 2.0));
+              colors.setXYZ(i, currentSmokeColor.r, currentSmokeColor.g, currentSmokeColor.b);
+            } else { // Particle is alive, update it
               positions.setXYZ(
                 i,
-                positions.getX(i) + velocities.getX(i) * delta * 60 + Math.sin(positions.getY(i) + lives.getX(i) * 0.1) * 0.01, 
+                positions.getX(i) + velocities.getX(i) * delta * 60 + Math.sin(positions.getY(i) * 0.5 + lives.getX(i) * 0.05) * 0.015 * smokeSpread, 
                 positions.getY(i) + velocities.getY(i) * delta * 60,
-                positions.getZ(i) + velocities.getZ(i) * delta * 60 + Math.cos(positions.getY(i) + lives.getX(i) * 0.1) * 0.01 
+                positions.getZ(i) + velocities.getZ(i) * delta * 60 + Math.cos(positions.getY(i) * 0.5 + lives.getX(i) * 0.05) * 0.015 * smokeSpread
               );
-              alphas.setX(i, (0.3 + Math.random() * 0.4) * (lives.getX(i) / (BASE_SMOKE_LIFESPAN * 0.75)));
-              const lifeRatio = lives.getX(i) / BASE_SMOKE_LIFESPAN;
-              sizes.setX(i, (0.4 + Math.random() * 0.3) * (1 + Math.sin( (1-lifeRatio) * Math.PI) * 0.5 ) );
+              const lifeRatio = Math.max(0, lives.getX(i) / BASE_SMOKE_LIFESPAN);
+              alphas.setX(i, (0.25 + Math.random() * 0.15) * lifeRatio); // Fade out
+              sizes.setX(i, ((0.35 + Math.random() * 0.3) * (smokeSpread / 2.0)) * (1 + (1-lifeRatio) * 0.5) ); // Grow then shrink slightly
             }
           }
-          positions.needsUpdate = true;
-          velocities.needsUpdate = true; 
-          alphas.needsUpdate = true;
-          sizes.needsUpdate = true;
-          lives.needsUpdate = true;
-          colors.needsUpdate = true;
+          positions.needsUpdate = true; velocities.needsUpdate = true; alphas.needsUpdate = true; sizes.needsUpdate = true; lives.needsUpdate = true; colors.needsUpdate = true;
         }
 
-        // Animate Fire (only if enabled)
+        // Animate Fire
         if (isFireEnabled && fireParticlesRef.current) {
           const geom = fireParticlesRef.current.geometry as THREE.BufferGeometry;
           const positions = geom.getAttribute('position') as THREE.BufferAttribute;
@@ -335,22 +341,27 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
           const sizes = geom.getAttribute('size') as THREE.BufferAttribute;
           const lives = geom.getAttribute('life') as THREE.BufferAttribute;
           const colors = geom.getAttribute('customColor') as THREE.BufferAttribute;
-
-          const fireBaseSpeed = particleSpeed * 2;
-          const fireSpread = particleSpread * 0.5;
+          const currentFireColor = new THREE_Module.Color(fireColor);
 
           for (let i = 0; i < positions.count; i++) {
-            lives.setX(i, lives.getX(i) - delta * 25); 
+            lives.setX(i, lives.getX(i) - delta * 20); 
 
             if (lives.getX(i) <= 0) {
-              positions.setXYZ(i, (Math.random() - 0.5) * fireSpread * 0.5, -2.5 + (Math.random() - 0.5) * 0.2, (Math.random() - 0.5) * fireSpread * 0.5);
-              velocities.setXYZ(i, (Math.random() - 0.5) * 0.01 * fireSpread, (Math.random() * fireBaseSpeed * 2.5) + fireBaseSpeed * 1.5, (Math.random() - 0.5) * 0.01 * fireSpread);
-              lives.setX(i, Math.random() * BASE_FIRE_LIFESPAN * 0.5 + BASE_FIRE_LIFESPAN * 0.5);
-              alphas.setX(i, 0.7 + Math.random() * 0.3);
-              sizes.setX(i, 0.3 + Math.random() * 0.4);
-              const fireC = new THREE_Module.Color();
-              fireC.setHSL(Math.random() * 0.1 + 0.05, 1, 0.6 + Math.random()*0.2);
-              colors.setXYZ(i, fireC.r, fireC.g, fireC.b);
+              positions.setXYZ(i, (Math.random() - 0.5) * fireSpread * 0.7, -2.5 + (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * fireSpread * 0.7);
+              velocities.setXYZ(i, (Math.random() - 0.5) * 0.015 * fireSpread, (Math.random() * fireSpeed * 2.0) + fireSpeed * 1.2, (Math.random() - 0.5) * 0.015 * fireSpread);
+              lives.setX(i, Math.random() * BASE_FIRE_LIFESPAN * 0.6 + BASE_FIRE_LIFESPAN * 0.4);
+              alphas.setX(i, 0.6 + Math.random() * 0.4);
+              sizes.setX(i, (0.25 + Math.random() * 0.35) * (fireSpread / 1.5));
+              
+              const fireHsl = { h: 0, s: 0, l: 0 };
+              currentFireColor.getHSL(fireHsl);
+              const variedColor = new THREE_Module.Color().setHSL(
+                  fireHsl.h + (Math.random() -0.5) * 0.08, 
+                  Math.max(0.75, fireHsl.s - Math.random() * 0.15), 
+                  Math.min(0.75, fireHsl.l + Math.random() * 0.15)
+              );
+              colors.setXYZ(i, variedColor.r, variedColor.g, variedColor.b);
+
             } else {
               positions.setXYZ(
                 i,
@@ -358,20 +369,25 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
                 positions.getY(i) + velocities.getY(i) * delta * 60,
                 positions.getZ(i) + velocities.getZ(i) * delta * 60
               );
-              const lifeRatio = lives.getX(i) / BASE_FIRE_LIFESPAN;
-              alphas.setX(i, (0.7 + Math.random() * 0.3) * lifeRatio);
-              sizes.setX(i, (0.3 + Math.random() * 0.4) * (0.8 + Math.random() * 0.4));
+              const lifeRatio = Math.max(0, lives.getX(i) / BASE_FIRE_LIFESPAN);
+              alphas.setX(i, (0.6 + Math.random() * 0.2) * lifeRatio); // Fade out
+              sizes.setX(i, ((0.25 + Math.random() * 0.35) * (fireSpread / 1.5)) * (0.8 + lifeRatio * 0.4) ); // Smaller as it dies
               
-              const c = new THREE_Module.Color();
-              c.setHSL(0.05 + 0.1 * (1 - lifeRatio), 1, 0.5 + 0.2 * lifeRatio);
-              colors.setXYZ(i, c.r, c.g, c.b);
+              // Transition color based on life (e.g., brighter when young, more reddish/embers when old)
+              const fireHsl = { h: 0, s: 0, l: 0 };
+              colors.getXYZ(i, fireHsl); // Get current color of particle
+              const baseParticleColor = new THREE_Module.Color(colors.getX(i), colors.getY(i), colors.getZ(i));
+              baseParticleColor.getHSL(fireHsl);
+
+              const finalColor = new THREE_Module.Color().setHSL(
+                  fireHsl.h, // Keep base hue
+                  fireHsl.s * (0.5 + lifeRatio * 0.5), // Desaturate a bit as it dies
+                  fireHsl.l * (0.4 + lifeRatio * 0.6) // Dim as it dies
+              );
+              colors.setXYZ(i, finalColor.r, finalColor.g, finalColor.b);
             }
           }
-          positions.needsUpdate = true;
-          alphas.needsUpdate = true;
-          sizes.needsUpdate = true;
-          lives.needsUpdate = true;
-          colors.needsUpdate = true;
+          positions.needsUpdate = true; velocities.needsUpdate = true; alphas.needsUpdate = true; sizes.needsUpdate = true; lives.needsUpdate = true; colors.needsUpdate = true;
         }
       }
       rendererRef.current.render(sceneRef.current, cameraRef.current);
@@ -383,9 +399,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
         const width = mountRef.current.clientWidth;
         const height = mountRef.current.clientHeight;
         rendererRef.current.setSize(width, height);
-        const newPixelRatio = window.devicePixelRatio;
-        rendererRef.current.setPixelRatio(newPixelRatio);
-
+        rendererRef.current.setPixelRatio(window.devicePixelRatio);
         cameraRef.current.aspect = width / height;
         cameraRef.current.updateProjectionMatrix();
       }
@@ -400,53 +414,70 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
         mountRef.current.removeChild(rendererRef.current.domElement);
       }
       rendererRef.current?.dispose();
-      
-      smokeParticlesRef.current?.geometry.dispose();
-      (smokeParticlesRef.current?.material as THREE.Material)?.dispose();
-      smokeParticleTexture?.dispose();
-
-      fireParticlesRef.current?.geometry.dispose();
-      (fireParticlesRef.current?.material as THREE.Material)?.dispose();
-      fireParticleTexture?.dispose();
-      
-      sceneRef.current = null;
-      cameraRef.current = null;
-      rendererRef.current = null;
-      smokeParticlesRef.current = null;
-      fireParticlesRef.current = null;
+      smokeParticlesRef.current?.geometry.dispose(); (smokeParticlesRef.current?.material as THREE.Material)?.dispose();
+      fireParticlesRef.current?.geometry.dispose(); (fireParticlesRef.current?.material as THREE.Material)?.dispose();
+      smokeParticleTexture?.dispose(); fireParticleTexture?.dispose();
+      sceneRef.current = null; cameraRef.current = null; rendererRef.current = null;
+      smokeParticlesRef.current = null; fireParticlesRef.current = null;
     };
-  }, [isThreeLoaded, actualParticleCount, fireParticleCount, particleSpread, smokeParticleTexture, fireParticleTexture, onCanvasReady, particleSpeed, isPlaying, particleColor, initParticles, isFireEnabled]); // Added isFireEnabled to dependencies
+  // Must re-run if counts or primary simulation parameters change significantly to re-initialize particles
+  }, [isThreeLoaded, actualSmokeParticleCount, actualFireParticleCount, onCanvasReady, initParticles]); 
 
 
+  // Effect to update smoke parameters dynamically (color, speed, spread)
   useEffect(() => {
-    if (!isThreeLoaded || !THREE_Module || !smokeParticlesRef.current) return;
-    // This effect is primarily for the material's base color if not using vertexColors,
-    // but since we ARE using vertexColors, the `particleColor` is used in `initParticles` 
-    // and during particle reset logic.
-  }, [particleColor, isThreeLoaded, THREE_Module]);
+    if (!isThreeLoaded || !THREE_Module || !smokeParticlesRef.current?.geometry) return;
+    const geom = smokeParticlesRef.current.geometry as THREE.BufferGeometry;
+    const velocities = geom.getAttribute('velocity') as THREE.BufferAttribute;
+    // Color is handled in animation loop for per-particle basis if needed, or globally here for material.
+    // For speed/spread, one might re-initialize or adjust velocities.
+    // For simplicity, these often require re-initialization for best effect, which is covered by main useEffect.
+    // However, direct velocity update is possible:
+     for (let i = 0; i < velocities.count; i++) {
+        const baseVelY = Math.random() * smokeSpeed + 0.01;
+        // Update X and Z based on spread, if desired without full re-init
+        const baseVelX = (Math.random() - 0.5) * 0.025 * smokeSpread;
+        const baseVelZ = (Math.random() - 0.5) * 0.025 * smokeSpread;
+        velocities.setXYZ(i, baseVelX, baseVelY, baseVelZ);
+     }
+     velocities.needsUpdate = true;
+  }, [smokeColor, smokeSpeed, smokeSpread, isThreeLoaded, THREE_Module]);
+
+  // Effect to update fire parameters dynamically
+  useEffect(() => {
+    if (!isThreeLoaded || !THREE_Module || !fireParticlesRef.current?.geometry) return;
+     const geom = fireParticlesRef.current.geometry as THREE.BufferGeometry;
+     const velocities = geom.getAttribute('velocity') as THREE.BufferAttribute;
+     for (let i = 0; i < velocities.count; i++) {
+        const baseVelY = (Math.random() * fireSpeed * 2.0) + fireSpeed * 1.2;
+        const baseVelX = (Math.random() - 0.5) * 0.015 * fireSpread;
+        const baseVelZ = (Math.random() - 0.5) * 0.015 * fireSpread;
+        velocities.setXYZ(i, baseVelX, baseVelY, baseVelZ);
+     }
+     velocities.needsUpdate = true;
+  }, [fireColor, fireSpeed, fireSpread, isThreeLoaded, THREE_Module]);
 
 
-   useEffect(() => {
-    if (!isThreeLoaded || !smokeParticlesRef.current || !smokeParticlesRef.current.geometry) return;
-    
-    const velocitiesAttribute = smokeParticlesRef.current.geometry.getAttribute('velocity') as THREE.BufferAttribute;
-    if (velocitiesAttribute) {
-      for (let i = 0; i < velocitiesAttribute.count; i++) {
-          const currentXVel = velocitiesAttribute.getX(i);
-          const currentZVel = velocitiesAttribute.getZ(i);
-          const newYVel = Math.random() * particleSpeed + 0.01;
-          velocitiesAttribute.setXYZ(i, currentXVel, newYVel, currentZVel);
-      }
-      velocitiesAttribute.needsUpdate = true;
-    }
-  }, [particleSpeed, isThreeLoaded, actualParticleCount]);
-
-  // Effect to toggle fire visibility
+  // Toggle fire visibility
   useEffect(() => {
     if (fireParticlesRef.current) {
       fireParticlesRef.current.visible = !!isFireEnabled;
     }
   }, [isFireEnabled]);
+
+  // Update background color
+  useEffect(() => {
+    if (rendererRef.current && THREE_Module) {
+      rendererRef.current.setClearColor(new THREE_Module.Color(backgroundColor));
+    }
+  }, [backgroundColor, THREE_Module, isThreeLoaded]);
+  
+  // Update play state
+  useEffect(() => {
+    // Animation loop itself checks `isPlaying`. No specific action needed here
+    // unless we want to explicitly pause/resume something in Three.js clock etc.
+  }, [isPlaying]);
+
 
   if (loadError) {
     return (
