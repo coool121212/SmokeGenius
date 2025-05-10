@@ -12,11 +12,11 @@ const presets: SimulationPreset[] = [
     name: "Default",
     description: "The standard starting simulation settings.",
     isSmokeEnabled: true,
-    smokeDensity: 2000,
+    smokeDensity: 2500, // Increased
     smokeBaseColor: "#F5F5F5",
     smokeAccentColor: "#DCDCDC",
     smokeSpeed: 0.02,
-    smokeSpread: 2.5,
+    smokeSpread: 3.0, // Increased
     smokeBlendMode: "Normal",
     smokeSource: "Center",
     smokeOpacity: 0.7,
@@ -24,9 +24,9 @@ const presets: SimulationPreset[] = [
     isFireEnabled: true,
     fireBaseColor: "#FFA500",
     fireAccentColor: "#FFD700",
-    fireDensity: 1000,
+    fireDensity: 1500, // Increased
     fireSpeed: 0.03,
-    fireSpread: 1.5,
+    fireSpread: 2.0, // Increased
     fireParticleSource: "Bottom",
     fireBlendMode: "Additive",
     fireOpacity: 0.8,
@@ -41,7 +41,7 @@ const presets: SimulationPreset[] = [
     smokeBaseColor: "#A9A9A9",
     smokeAccentColor: "#808080",
     smokeSpeed: 0.015,
-    smokeSpread: 1.8,
+    smokeSpread: 2.2, // Adjusted
     smokeBlendMode: "Normal",
     smokeSource: "Center",
     smokeOpacity: 0.6,
@@ -51,7 +51,7 @@ const presets: SimulationPreset[] = [
     fireAccentColor: "#FFB347",
     fireDensity: 800,
     fireSpeed: 0.02,
-    fireSpread: 1.2,
+    fireSpread: 1.5, // Adjusted
     fireParticleSource: "Bottom",
     fireBlendMode: "Additive",
     fireOpacity: 0.7,
@@ -66,7 +66,7 @@ const presets: SimulationPreset[] = [
     smokeBaseColor: "#333333",
     smokeAccentColor: "#1A1A1A",
     smokeSpeed: 0.05,
-    smokeSpread: 4.0,
+    smokeSpread: 4.5, // Adjusted
     smokeBlendMode: "Normal",
     smokeSource: "Bottom",
     smokeOpacity: 0.9,
@@ -76,7 +76,7 @@ const presets: SimulationPreset[] = [
     fireAccentColor: "#FF6347",
     fireDensity: 4500,
     fireSpeed: 0.06,
-    fireSpread: 3.0,
+    fireSpread: 3.5, // Adjusted
     fireParticleSource: "Bottom",
     fireBlendMode: "Additive",
     fireOpacity: 0.95,
@@ -91,7 +91,7 @@ const presets: SimulationPreset[] = [
     smokeBaseColor: "#E0E0E0",
     smokeAccentColor: "#B0B0B0",
     smokeSpeed: 0.01,
-    smokeSpread: 3.5,
+    smokeSpread: 4.0, // Adjusted
     smokeBlendMode: "Additive",
     smokeSource: "Bottom",
     smokeOpacity: 0.5,
@@ -116,7 +116,7 @@ const presets: SimulationPreset[] = [
     smokeBaseColor: "#8A2BE2", 
     smokeAccentColor: "#4B0082",
     smokeSpeed: 0.025,
-    smokeSpread: 3.0,
+    smokeSpread: 3.5, // Adjusted
     smokeBlendMode: "Additive",
     smokeSource: "Center",
     smokeOpacity: 0.8,
@@ -126,7 +126,7 @@ const presets: SimulationPreset[] = [
     fireAccentColor: "#DA70D6",
     fireDensity: 500,
     fireSpeed: 0.04,
-    fireSpread: 1.0,
+    fireSpread: 1.2, // Adjusted
     fireParticleSource: "Center",
     fireBlendMode: "Additive",
     fireOpacity: 0.6,
@@ -402,3 +402,4 @@ export default function SmokeGeniusPage() {
     </div>
   );
 }
+
