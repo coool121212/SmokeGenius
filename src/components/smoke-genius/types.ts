@@ -28,4 +28,7 @@ export interface SimulationPreset {
   fireTurbulence: number;
 
   backgroundColor: string;
+  windDirectionX: number; // Horizontal wind direction (-1 to 1)
+  windStrength: number; // Wind strength (e.g., 0 to 0.1)
 }
+

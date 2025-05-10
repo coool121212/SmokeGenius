@@ -18,19 +18,19 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-  CircleDot, // Record
-  StopCircle, // Stop Record
-  Download, // Download
-  Play, // Play Sim
-  Pause, // Pause Sim
-  Settings2, // Main Panel Icon
-  Video, // Media Tab Icon
-  Cloud, // Smoke Tab Icon
-  Flame, // Fire Tab Icon
-  PaintBucket, // Scene Tab Icon / Background Color
+  CircleDot, 
+  StopCircle, 
+  Download, 
+  Play, 
+  Pause, 
+  Settings2, 
+  Video, 
+  Cloud, 
+  Flame, 
   ArrowDownToLine,
   MousePointer2, 
   Target,
+  Wind, // Icon for Wind
 } from "lucide-react";
 
 interface ControlsPanelProps {
@@ -44,7 +44,7 @@ interface ControlsPanelProps {
   setSmokeAccentColor: Dispatch<SetStateAction<string>>;
   smokeSpeed: number;
   setSmokeSpeed: Dispatch<SetStateAction<number>>;
-  smokeSpread: number; // Represents Particle Size in UI
+  smokeSpread: number; 
   setSmokeSpread: Dispatch<SetStateAction<number>>;
   smokeBlendMode: BlendMode;
   setSmokeBlendMode: Dispatch<SetStateAction<BlendMode>>;
@@ -65,7 +65,7 @@ interface ControlsPanelProps {
   setFireDensity: Dispatch<SetStateAction<number>>;
   fireSpeed: number;
   setFireSpeed: Dispatch<SetStateAction<number>>;
-  fireSpread: number; // Represents Particle Size in UI
+  fireSpread: number; 
   setFireSpread: Dispatch<SetStateAction<number>>;
   fireParticleSource: ParticleSource;
   setFireParticleSource: Dispatch<SetStateAction<ParticleSource>>;
@@ -78,6 +78,10 @@ interface ControlsPanelProps {
 
   backgroundColor: string;
   setBackgroundColor: Dispatch<SetStateAction<string>>;
+  windDirectionX: number;
+  setWindDirectionX: Dispatch<SetStateAction<number>>;
+  windStrength: number;
+  setWindStrength: Dispatch<SetStateAction<number>>;
   
   isRecording: boolean;
   onStartRecording: () => void;
@@ -115,6 +119,8 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
   fireTurbulence, setFireTurbulence,
 
   backgroundColor, setBackgroundColor,
+  windDirectionX, setWindDirectionX,
+  windStrength, setWindStrength,
 
   isRecording, onStartRecording, onStopRecording, onDownloadRecording, recordedVideoUrl,
   isPlaying, setIsPlaying,
@@ -150,7 +156,7 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
               Adjust parameters or select a preset to begin.
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 mb-6">
               <div>
                 <Label className="font-semibold text-sm mb-1 block">Simulation Preset</Label>
                 <Select onValueChange={(value) => {
@@ -185,10 +191,26 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                     <span className="text-sm text-muted-foreground">{backgroundColor.toUpperCase()}</span>
                 </div>
               </div>
+              <div className="lg:col-span-1 grid grid-cols-2 gap-x-4">
+                <div>
+                  <Label htmlFor="windDirectionX" className="font-semibold text-sm mb-1 block flex items-center">
+                    <Wind className="w-4 h-4 mr-1.5 text-primary/80"/> Wind Dir.
+                  </Label>
+                  <Slider id="windDirectionX" min={-1} max={1} step={0.01} value={[windDirectionX]} onValueChange={(v) => setWindDirectionX(v[0])} aria-label="Wind Direction (Horizontal)"/>
+                  <span className="text-xs text-muted-foreground text-center block mt-1">{windDirectionX.toFixed(2)}</span>
+                </div>
+                <div>
+                  <Label htmlFor="windStrength" className="font-semibold text-sm mb-1 block flex items-center">
+                     <Wind className="w-4 h-4 mr-1.5 text-primary/80"/> Wind Str.
+                  </Label>
+                  <Slider id="windStrength" min={0} max={0.05} step={0.001} value={[windStrength]} onValueChange={(v) => setWindStrength(v[0])} aria-label="Wind Strength"/>
+                  <span className="text-xs text-muted-foreground text-center block mt-1">{windStrength.toFixed(3)}</span>
+                </div>
+              </div>
             </div>
 
             <Tabs defaultValue="smoke" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-4"> {/* Changed grid-cols-4 to grid-cols-3 */}
+              <TabsList className="grid w-full grid-cols-3 mb-4">
                 <TabsTrigger value="smoke"><Cloud className="mr-1.5 h-4 w-4" />Smoke</TabsTrigger>
                 <TabsTrigger value="fire"><Flame className="mr-1.5 h-4 w-4" />Fire</TabsTrigger>
                 <TabsTrigger value="media"><Video className="mr-1.5 h-4 w-4" />Media</TabsTrigger>
@@ -399,3 +421,4 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
 };
 
 export default ControlsPanel;
+

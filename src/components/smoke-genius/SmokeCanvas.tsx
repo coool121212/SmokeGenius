@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
@@ -31,6 +32,8 @@ interface SmokeCanvasProps {
   fireTurbulence?: number;
 
   backgroundColor?: string;
+  windDirectionX?: number;
+  windStrength?: number;
   isPlaying?: boolean;
   onCanvasReady?: (canvas: HTMLCanvasElement) => void;
 }
@@ -39,7 +42,7 @@ const MAX_SMOKE_PARTICLES = 8000;
 const MAX_FIRE_PARTICLES = 5000;
 
 const BASE_FIRE_LIFESPAN = 70; 
-const BASE_SMOKE_LIFESPAN = 220; // Increased for more lingering smoke
+const BASE_SMOKE_LIFESPAN = 220; 
 
 const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   isSmokeEnabled = true,
@@ -65,6 +68,8 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   fireTurbulence = 1.2,
 
   backgroundColor = '#000000',
+  windDirectionX = 0,
+  windStrength = 0,
   isPlaying = true,
   onCanvasReady,
 }) => {
@@ -129,14 +134,14 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   const smokeParticleTexture = useMemo(() => {
     if (!THREE_Module || !isThreeLoaded) return null;
     const canvas = document.createElement('canvas');
-    canvas.width = 256; // Increased size for more detail
+    canvas.width = 256; 
     canvas.height = 256;
     const context = canvas.getContext('2d');
     if (!context) return null;
 
     const gradient = context.createRadialGradient(
-      canvas.width / 2, canvas.height / 2, canvas.width / 10, // Smaller, denser core
-      canvas.width / 2, canvas.height / 2, canvas.width / 2.2 // Softer falloff
+      canvas.width / 2, canvas.height / 2, canvas.width / 10, 
+      canvas.width / 2, canvas.height / 2, canvas.width / 2.2 
     );
     gradient.addColorStop(0, 'rgba(255,255,255,0.85)'); 
     gradient.addColorStop(0.3, 'rgba(245,245,245,0.6)'); 
@@ -146,7 +151,6 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     context.fillStyle = gradient;
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Add a few smaller, fainter puffs for more texture variation
     for (let i = 0; i < 4; i++) {
       const x = canvas.width / 2 + (Math.random() - 0.5) * canvas.width / 3;
       const y = canvas.height / 2 + (Math.random() - 0.5) * canvas.height / 3;
@@ -220,13 +224,13 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
             positions[i3 + 1] = -2.5 + (Math.random() * 0.1);      
             positions[i3 + 2] = (Math.random() - 0.5) * spreadVal * 0.6; 
           } else { 
-            positions[i3] = (Math.random() - 0.5) * spreadVal * 2.8; // Wider base for smoke
+            positions[i3] = (Math.random() - 0.5) * spreadVal * 2.8; 
             positions[i3 + 1] = -2.8 + (Math.random() * 0.3);      
             positions[i3 + 2] = (Math.random() - 0.5) * spreadVal * 0.8; 
           }
           break;
         case "Mouse":
-          const mouseSpreadFactor = isFireSystem ? 0.3 : 0.6; // Wider smoke spread from mouse
+          const mouseSpreadFactor = isFireSystem ? 0.3 : 0.6; 
           positions[i3] = mouseSceneXRef.current + (Math.random() - 0.5) * spreadVal * mouseSpreadFactor;
           positions[i3 + 1] = (Math.random() - 0.5) * 0.5 - 2.0; 
           positions[i3 + 2] = (Math.random() - 0.5) * spreadVal * mouseSpreadFactor;
@@ -238,7 +242,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
             positions[i3 + 1] = -2.5 + (Math.random() - 0.5) * 0.2; 
             positions[i3 + 2] = (Math.random() - 0.5) * spreadVal * 1.8; 
           } else { 
-            positions[i3] = (Math.random() - 0.5) * spreadVal * 2.2; // Wider smoke center
+            positions[i3] = (Math.random() - 0.5) * spreadVal * 2.2; 
             positions[i3 + 1] = (Math.random() - 0.5) * 0.5 - 2.0; 
             positions[i3 + 2] = (Math.random() - 0.5) * spreadVal * 2.2; 
           }
@@ -269,19 +273,19 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
         particleSizes[i] = (0.6 + Math.random() * 0.6) * (spreadVal / 1.1); 
         lives[i] = Math.random() * BASE_FIRE_LIFESPAN * 0.5 + BASE_FIRE_LIFESPAN * 0.5; 
       } else { // Smoke
-        velocities[i3] = (Math.random() - 0.5) * 0.025 * spreadVal; // Slightly more varied initial horizontal velocity
-        velocities[i3 + 1] = Math.random() * speedVal * 0.8 + speedVal * 0.2; // Slower, more buoyant rise
+        velocities[i3] = (Math.random() - 0.5) * 0.025 * spreadVal; 
+        velocities[i3 + 1] = Math.random() * speedVal * 0.8 + speedVal * 0.2; 
         velocities[i3 + 2] = (Math.random() - 0.5) * 0.025 * spreadVal;
 
         finalColor.copy(baseC);
-        finalColor.lerp(accentC, Math.random() * 0.3); // Less accent influence for smoke
+        finalColor.lerp(accentC, Math.random() * 0.3); 
 
         particleColors[i3] = finalColor.r;
         particleColors[i3 + 1] = finalColor.g;
         particleColors[i3 + 2] = finalColor.b;
-        alphas[i] = opacityVal * (0.1 + Math.random() * 0.2); // Start fainter for softer appearance
-        particleSizes[i] = (0.6 + Math.random() * 0.6) * (spreadVal / 1.5) ; // Start a bit smaller, will grow
-        lives[i] = Math.random() * BASE_SMOKE_LIFESPAN * 0.7 + BASE_SMOKE_LIFESPAN * 0.3; // Longer average lifespan
+        alphas[i] = opacityVal * (0.1 + Math.random() * 0.2); 
+        particleSizes[i] = (0.6 + Math.random() * 0.6) * (spreadVal / 1.5) ; 
+        lives[i] = Math.random() * BASE_SMOKE_LIFESPAN * 0.7 + BASE_SMOKE_LIFESPAN * 0.3; 
       }
     }
 
@@ -445,8 +449,8 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
               finalSmokeColor.lerp(currentSmokeAccentC, Math.random() * 0.3);
               colorsAttr.setXYZ(i, finalSmokeColor.r, finalSmokeColor.g, finalSmokeColor.b);
               
-              alphas.setX(i, smokeOpacity * (0.05 + Math.random() * 0.15)); // Start very faint
-              particleSizesAttr.setX(i, (0.4 + Math.random() * 0.4) * (smokeSpread / 1.8)); // Start smaller
+              alphas.setX(i, smokeOpacity * (0.05 + Math.random() * 0.15)); 
+              particleSizesAttr.setX(i, (0.4 + Math.random() * 0.4) * (smokeSpread / 1.8)); 
 
             } else { 
               const lifeRatio = Math.max(0, lives.getX(i) / fullSmokeLifespan); 
@@ -454,31 +458,32 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
               const baseTurbulenceEffect = smokeSpread * 0.020; 
               const turbulenceStrength = smokeTurbulence; 
               const timeFactorTurbulence = (fullSmokeLifespan - lives.getX(i)) * 0.05 + positions.getY(i) * 0.08; 
-              const xTurbulence = Math.sin(timeFactorTurbulence + i * 0.1) * baseTurbulenceEffect * turbulenceStrength * (1.0 - lifeRatio * 0.5); // Turbulence stronger for younger particles
+              const xTurbulence = Math.sin(timeFactorTurbulence + i * 0.1) * baseTurbulenceEffect * turbulenceStrength * (1.0 - lifeRatio * 0.5); 
               const zTurbulence = Math.cos(timeFactorTurbulence * 0.7 + i * 0.07) * baseTurbulenceEffect * turbulenceStrength * (1.0 - lifeRatio * 0.5);
+              
+              const windEffectX = (windDirectionX || 0) * (windStrength || 0) * delta * 60;
+
 
               positions.setXYZ(
                 i,
-                positions.getX(i) + velocities.getX(i) * delta * 60 + xTurbulence, 
+                positions.getX(i) + velocities.getX(i) * delta * 60 + xTurbulence + windEffectX, 
                 positions.getY(i) + velocities.getY(i) * delta * 60,
                 positions.getZ(i) + velocities.getZ(i) * delta * 60 + zTurbulence
               );
               
-              // Alpha: fade in, hold, then fade out
-              const fadeInEnd = 0.85; // Fraction of life remaining when fade-in is complete
-              const fadeOutStart = 0.35; // Fraction of life remaining when fade-out starts
+              const fadeInEnd = 0.85; 
+              const fadeOutStart = 0.35; 
               let alphaMod = 1.0;
-              if (lifeRatio > fadeInEnd) { // Fading In
+              if (lifeRatio > fadeInEnd) { 
                 alphaMod = (1.0 - lifeRatio) / (1.0 - fadeInEnd);
-              } else if (lifeRatio < fadeOutStart) { // Fading Out
+              } else if (lifeRatio < fadeOutStart) { 
                 alphaMod = lifeRatio / fadeOutStart;
               }
               alphas.setX(i, smokeOpacity * (0.4 + Math.random() * 0.3) * THREE_Module.MathUtils.smootherstep(alphaMod,0,1));
               
-              // Size: grow significantly over life
-              const initialSize = particleSizesAttr.getX(i); // Get initial size from reset or previous frame
-              const growthFactor = 1.0 + (1.0 - lifeRatio) * (2.5 + smokeSpread * 0.2); // More significant growth
-              particleSizesAttr.setX(i, initialSize * (1.0 + delta * growthFactor * 0.1)); // Gradual growth
+              const initialSize = particleSizesAttr.getX(i); 
+              const growthFactor = 1.0 + (1.0 - lifeRatio) * (2.5 + smokeSpread * 0.2); 
+              particleSizesAttr.setX(i, initialSize * (1.0 + delta * growthFactor * 0.1)); 
             }
           }
           positions.needsUpdate = true; velocities.needsUpdate = true; alphas.needsUpdate = true; 
@@ -548,17 +553,19 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
               const timeFactorFireTurbulence = (fullFireLifespan - lives.getX(i)) * 0.25 + positions.getY(i) * 0.2; 
               const xFireTurbulence = Math.sin(timeFactorFireTurbulence + i * 0.15) * baseFireTurbulenceEffect * fireTurbulenceStrength;
               const zFireTurbulence = Math.cos(timeFactorFireTurbulence * 0.6 + i * 0.1) * baseFireTurbulenceEffect * fireTurbulenceStrength;
+              
+              const windEffectX = (windDirectionX || 0) * (windStrength || 0) * delta * 60;
 
               positions.setXYZ(
                 i,
-                positions.getX(i) + velocities.getX(i) * delta * 60 + xFireTurbulence,
+                positions.getX(i) + velocities.getX(i) * delta * 60 + xFireTurbulence + windEffectX,
                 positions.getY(i) + velocities.getY(i) * delta * 60,
                 positions.getZ(i) + velocities.getZ(i) * delta * 60 + zFireTurbulence
               );
               
-              alphas.setX(i, fireOpacity * (0.8 + Math.random() * 0.2) * Math.pow(lifeRatio, 1.5)); // Fire fades more traditionally
+              alphas.setX(i, fireOpacity * (0.8 + Math.random() * 0.2) * Math.pow(lifeRatio, 1.5)); 
               
-              particleSizesAttr.setX(i, particleSizesAttr.getX(i) * (0.95 + lifeRatio * 0.1 + Math.random() * 0.05)); // Slight flicker and shrink
+              particleSizesAttr.setX(i, particleSizesAttr.getX(i) * (0.95 + lifeRatio * 0.1 + Math.random() * 0.05)); 
             }
           }
           positions.needsUpdate = true; velocities.needsUpdate = true; alphas.needsUpdate = true; 
@@ -597,7 +604,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     };
   }, [
       isThreeLoaded, actualSmokeParticleCount, actualFireParticleCount, onCanvasReady, initParticles, 
-      backgroundColor, 
+      backgroundColor, windDirectionX, windStrength,
       smokeBaseColor, smokeAccentColor, smokeSpeed, smokeSpread, smokeOpacity, smokeTurbulence, smokeSource, smokeBlendMode, isSmokeEnabled, 
       fireBaseColor, fireAccentColor, fireSpeed, fireSpread, fireOpacity, fireTurbulence, fireParticleSource, fireBlendMode, isFireEnabled, 
       isPlaying
@@ -677,3 +684,4 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
 };
 
 export default SmokeCanvas;
+
