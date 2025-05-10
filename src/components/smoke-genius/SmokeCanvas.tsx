@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
@@ -14,7 +13,7 @@ interface SmokeCanvasProps {
   smokeBaseColor?: string;
   smokeAccentColor?: string;
   smokeSpeed?: number;
-  smokeSpread?: number; // Represents Particle Size / Emission Spread
+  smokeSpread?: number; 
   smokeBlendMode?: BlendMode;
   smokeSource?: ParticleSource;
   smokeOpacity?: number;
@@ -25,7 +24,7 @@ interface SmokeCanvasProps {
   fireAccentColor?: string;
   fireDensity?: number;
   fireSpeed?: number;
-  fireSpread?: number; // Represents Particle Size / Emission Spread
+  fireSpread?: number; 
   fireParticleSource?: ParticleSource;
   fireBlendMode?: BlendMode;
   fireOpacity?: number;
@@ -48,7 +47,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   smokeBaseColor = '#F5F5F5',
   smokeAccentColor = '#DCDCDC',
   smokeSpeed = 0.02,
-  smokeSpread = 2,
+  smokeSpread = 2.5, // Default value, consistent with page.tsx
   smokeBlendMode = "Normal",
   smokeSource = "Center",
   smokeOpacity = 0.7,
@@ -59,7 +58,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   fireAccentColor = '#FFD700',
   fireDensity = 1000,
   fireSpeed = 0.03,
-  fireSpread = 1.5,
+  fireSpread = 1.5, // Default value, consistent with page.tsx
   fireParticleSource = "Bottom",
   fireBlendMode = "Additive",
   fireOpacity = 0.8,
@@ -108,17 +107,9 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       if (!mountRef.current || !cameraRef.current || !THREE_Module) return;
       const canvasBounds = mountRef.current.getBoundingClientRect();
       
-      // Convert mouse position to normalized device coordinates (-1 to +1)
       const mouseXNDC = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
-      // const mouseYNDC = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1; // Y is inverted
-
-      // To convert to scene coordinates at z=0 (or a specific plane)
-      // Requires unprojecting. For simplicity, if particles are primarily affected by X:
-      // We'll estimate a visible width at a certain depth.
-      // A more accurate way involves raycasting or unprojecting view coordinates.
-      // Assuming camera looks along -Z, and particles are around Z=0 plane from camera at Z=5.
-      // This is a simplified conversion for X.
-      const vec = new THREE_Module.Vector3(mouseXNDC, 0, 0.5); // Using 0 for Y for now
+      
+      const vec = new THREE_Module.Vector3(mouseXNDC, 0, 0.5); 
       vec.unproject(cameraRef.current);
       const dir = vec.sub(cameraRef.current.position).normalize();
       const distance = -cameraRef.current.position.z / dir.z;
@@ -147,12 +138,10 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       canvas.width / 2, canvas.height / 2, 0,
       canvas.width / 2, canvas.height / 2, canvas.width / 2
     );
-    // Softer smoke texture
-    gradient.addColorStop(0, 'rgba(255,255,255,0.6)'); 
-    gradient.addColorStop(0.3, 'rgba(230,230,230,0.3)');
-    gradient.addColorStop(0.7, 'rgba(200,200,200,0.1)');
+    gradient.addColorStop(0, 'rgba(255,255,255,0.75)'); // Denser core
+    gradient.addColorStop(0.4, 'rgba(230,230,230,0.4)'); // Smoother transition
+    gradient.addColorStop(0.8, 'rgba(200,200,200,0.15)'); // Wider spread before full fade
     gradient.addColorStop(1, 'rgba(180,180,180,0)');
-
 
     context.fillStyle = gradient;
     context.fillRect(0, 0, canvas.width, canvas.height);
@@ -171,7 +160,6 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       canvas.width / 2, canvas.height / 2, 0,
       canvas.width / 2, canvas.height / 2, canvas.width / 2
     );
-    // Softer, more flame-like fire texture
     gradient.addColorStop(0, 'rgba(255, 220, 180, 0.9)'); 
     gradient.addColorStop(0.2, 'rgba(255, 180, 100, 0.7)');
     gradient.addColorStop(0.5, 'rgba(255, 120, 30, 0.4)');   
@@ -279,7 +267,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
         particleColors[i3 + 1] = finalColor.g;
         particleColors[i3 + 2] = finalColor.b;
         alphas[i] = opacityVal * (0.3 + Math.random() * 0.4); 
-        particleSizes[i] = (0.4 + Math.random() * 0.35) * (spreadVal / 2.0) ; 
+        particleSizes[i] = (0.5 + Math.random() * 0.45) * (spreadVal / 1.8) ; // Adjusted initial size
         lives[i] = Math.random() * BASE_SMOKE_LIFESPAN * 0.6 + BASE_SMOKE_LIFESPAN * 0.4;
       }
     }
@@ -328,14 +316,11 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
            vAlpha = alpha; 
           `
         ).replace(
-          /gl_PointSize = \w+;/, 
-          `gl_PointSize = particleSize * ${pixelRatio.toFixed(1)};` 
-        ).replace(
            `#include <project_vertex>`,
            `
             vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );
             gl_Position = projectionMatrix * mvPosition;
-            gl_PointSize = particleSize * ( ${pixelRatio.toFixed(1)} * ${100.0} / -mvPosition.z ); // Increased base size multiplier for screen space
+            gl_PointSize = particleSize * ( ${pixelRatio.toFixed(1)} * 100.0 / -mvPosition.z ); // Ensure 100.0 is a float
            `
         );
 
@@ -445,20 +430,20 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
               finalSmokeColor.copy(currentSmokeBaseC);
               finalSmokeColor.lerp(currentSmokeAccentC, Math.random() * 0.4);
               colorsAttr.setXYZ(i, finalSmokeColor.r, finalSmokeColor.g, finalSmokeColor.b);
-              // Set initial alpha and size for new particles
+              
               const initialAlphaSmoke = smokeOpacity * (0.5 + Math.random() * 0.3);
               alphas.setX(i, initialAlphaSmoke);
-              const initialSizeSmoke = (0.4 + Math.random() * 0.35) * (smokeSpread / 2.0);
+              const initialSizeSmoke = (0.5 + Math.random() * 0.45) * (smokeSpread / 1.8); // Adjusted initial size on reset
               particleSizesAttr.setX(i, initialSizeSmoke);
 
             } else { 
-              const lifeRatio = Math.max(0, lives.getX(i) / (BASE_SMOKE_LIFESPAN * 0.6 + BASE_SMOKE_LIFESPAN * 0.4)); // Normalize based on max possible life
+              const lifeRatio = Math.max(0, lives.getX(i) / (BASE_SMOKE_LIFESPAN * 0.6 + BASE_SMOKE_LIFESPAN * 0.4)); 
               
-              const baseTurbulenceEffect = smokeSpread * 0.015; 
+              const baseTurbulenceEffect = smokeSpread * 0.020; // Adjusted base turbulence effect
               const turbulenceStrength = smokeTurbulence; 
-              const timeFactorTurbulence = lives.getX(i) * 0.07 + positions.getY(i) * 0.1; // Add more variation based on Y
+              const timeFactorTurbulence = lives.getX(i) * 0.07 + positions.getY(i) * 0.1; 
               const xTurbulence = Math.sin(timeFactorTurbulence) * baseTurbulenceEffect * turbulenceStrength;
-              const zTurbulence = Math.cos(timeFactorTurbulence * 0.7) * baseTurbulenceEffect * turbulenceStrength; // Vary frequency for Z
+              const zTurbulence = Math.cos(timeFactorTurbulence * 0.7) * baseTurbulenceEffect * turbulenceStrength; 
 
               positions.setXYZ(
                 i,
@@ -467,11 +452,21 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
                 positions.getZ(i) + velocities.getZ(i) * delta * 60 + zTurbulence
               );
               
-              const initialAlphaSmoke = smokeOpacity * (0.5 + Math.random() * 0.3); // Recalculate or use stored initial alpha
-              alphas.setX(i, initialAlphaSmoke * Math.pow(lifeRatio, 1.5)); 
+              let currentAlpha = alphas.getX(i); 
+              if(geom.attributes.alpha) { 
+                  currentAlpha = (geom.attributes.alpha as THREE.BufferAttribute).getX(i);
+              } else { 
+                 currentAlpha = smokeOpacity * (0.5 + Math.random() * 0.3);
+              }
+              alphas.setX(i, currentAlpha * Math.pow(lifeRatio, 1.5)); 
               
-              const initialSizeSmoke = (0.4 + Math.random() * 0.35) * (smokeSpread / 2.0); // Recalculate or use stored initial size
-              particleSizesAttr.setX(i, initialSizeSmoke * (1 + (1 - lifeRatio) * 1.8)); // Expand more
+              let currentSize = particleSizesAttr.getX(i);
+               if(geom.attributes.particleSize) {
+                   currentSize = (geom.attributes.particleSize as THREE.BufferAttribute).getX(i);
+               } else {
+                   currentSize = (0.5 + Math.random() * 0.45) * (smokeSpread / 1.8); // Fallback to adjusted initial size logic
+               }
+              particleSizesAttr.setX(i, currentSize * (1 + (1 - lifeRatio) * 2.2)); // Adjusted growth factor
             }
           }
           positions.needsUpdate = true; velocities.needsUpdate = true; alphas.needsUpdate = true; 
@@ -528,18 +523,18 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
                   Math.min(0.95, fireHsl.l + Math.random() * 0.1)
               );
               colorsAttr.setXYZ(i, finalFireColor.r, finalFireColor.g, finalFireColor.b);
-              // Set initial alpha and size for new particles
+              
               const initialAlphaFire = fireOpacity * (0.8 + Math.random() * 0.2);
               alphas.setX(i, initialAlphaFire);
               const initialSizeFire = (0.3 + Math.random() * 0.4) * (fireSpread / 1.5);
               particleSizesAttr.setX(i, initialSizeFire);
 
             } else {
-              const lifeRatio = Math.max(0, lives.getX(i) / (BASE_FIRE_LIFESPAN * 0.5 + BASE_FIRE_LIFESPAN * 0.5)); // Normalize based on max possible life
+              const lifeRatio = Math.max(0, lives.getX(i) / (BASE_FIRE_LIFESPAN * 0.5 + BASE_FIRE_LIFESPAN * 0.5)); 
 
               const baseFireTurbulenceEffect = fireSpread * 0.01; 
               const fireTurbulenceStrength = fireTurbulence; 
-              const timeFactorFireTurbulence = lives.getX(i) * 0.25 + positions.getY(i) * 0.2; // Faster flicker for fire
+              const timeFactorFireTurbulence = lives.getX(i) * 0.25 + positions.getY(i) * 0.2; 
               const xFireTurbulence = Math.sin(timeFactorFireTurbulence) * baseFireTurbulenceEffect * fireTurbulenceStrength;
               const zFireTurbulence = Math.cos(timeFactorFireTurbulence * 0.6) * baseFireTurbulenceEffect * fireTurbulenceStrength;
 
@@ -550,11 +545,21 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
                 positions.getZ(i) + velocities.getZ(i) * delta * 60 + zFireTurbulence
               );
               
-              const initialAlphaFire = fireOpacity * (0.8 + Math.random() * 0.2); // Recalculate or use stored
-              alphas.setX(i, initialAlphaFire * Math.pow(lifeRatio, 2)); 
+              let currentAlpha = alphas.getX(i);
+              if(geom.attributes.alpha) {
+                  currentAlpha = (geom.attributes.alpha as THREE.BufferAttribute).getX(i);
+              } else {
+                 currentAlpha = fireOpacity * (0.8 + Math.random() * 0.2);
+              }
+              alphas.setX(i, currentAlpha * Math.pow(lifeRatio, 2)); 
               
-              const initialSizeFire = (0.3 + Math.random() * 0.4) * (fireSpread / 1.5); // Recalculate or use stored
-              particleSizesAttr.setX(i, initialSizeFire * (0.7 + lifeRatio * 0.5 + Math.random() * 0.3)); // Flicker and slight shrink
+              let currentSize = particleSizesAttr.getX(i);
+               if(geom.attributes.particleSize) {
+                   currentSize = (geom.attributes.particleSize as THREE.BufferAttribute).getX(i);
+               } else {
+                   currentSize = (0.3 + Math.random() * 0.4) * (fireSpread / 1.5);
+               }
+              particleSizesAttr.setX(i, currentSize * (0.7 + lifeRatio * 0.5 + Math.random() * 0.3)); 
             }
           }
           positions.needsUpdate = true; velocities.needsUpdate = true; alphas.needsUpdate = true; 
