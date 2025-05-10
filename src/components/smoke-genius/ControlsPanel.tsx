@@ -28,9 +28,8 @@ import {
   Cloud, // Smoke Tab Icon
   Flame, // Fire Tab Icon
   PaintBucket, // Scene Tab Icon / Background Color
-  Wand2, // Presets Tab Icon / Simulation Preset
   ArrowDownToLine,
-  MousePointer2, // Changed from MousePointerSquare
+  MousePointer2, 
   Target,
 } from "lucide-react";
 
@@ -174,16 +173,25 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
               </div>
               <div>
                 <Label htmlFor="backgroundColor" className="font-semibold text-sm mb-1 block">Background Color</Label>
-                <Input id="backgroundColor" type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Scene background color" />
+                 <div className="flex items-center gap-2">
+                    <Input 
+                        id="backgroundColor" 
+                        type="color" 
+                        value={backgroundColor} 
+                        onChange={(e) => setBackgroundColor(e.target.value)} 
+                        className="w-10 h-10 p-1 cursor-pointer rounded-md border-2 border-input focus:border-primary focus:ring-primary"
+                        aria-label="Scene background color" 
+                    />
+                    <span className="text-sm text-muted-foreground">{backgroundColor.toUpperCase()}</span>
+                </div>
               </div>
             </div>
 
             <Tabs defaultValue="smoke" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-4"> 
+              <TabsList className="grid w-full grid-cols-3 mb-4"> {/* Changed grid-cols-4 to grid-cols-3 */}
                 <TabsTrigger value="smoke"><Cloud className="mr-1.5 h-4 w-4" />Smoke</TabsTrigger>
                 <TabsTrigger value="fire"><Flame className="mr-1.5 h-4 w-4" />Fire</TabsTrigger>
                 <TabsTrigger value="media"><Video className="mr-1.5 h-4 w-4" />Media</TabsTrigger>
-                <TabsTrigger value="presets-tab" disabled><Wand2 className="mr-1.5 h-4 w-4" />Presets</TabsTrigger> {/* Disabled as presets are now global */}
               </TabsList>
 
               {/* Smoke Tab Content */}
@@ -197,11 +205,31 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                     {/* Colors in first row */}
                     <div className="lg:col-span-2">
                       <Label htmlFor="smokeBaseColor" className="font-semibold text-sm mb-1 block">Particle Base Color</Label>
-                      <Input id="smokeBaseColor" type="color" value={smokeBaseColor} onChange={(e) => setSmokeBaseColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Smoke particle base color" />
+                       <div className="flex items-center gap-2">
+                        <Input 
+                            id="smokeBaseColor" 
+                            type="color" 
+                            value={smokeBaseColor} 
+                            onChange={(e) => setSmokeBaseColor(e.target.value)} 
+                            className="w-10 h-10 p-1 cursor-pointer rounded-md border-2 border-input focus:border-primary focus:ring-primary"
+                            aria-label="Smoke particle base color" 
+                        />
+                        <span className="text-sm text-muted-foreground">{smokeBaseColor.toUpperCase()}</span>
+                       </div>
                     </div>
                     <div className="lg:col-span-2">
                       <Label htmlFor="smokeAccentColor" className="font-semibold text-sm mb-1 block">Particle Accent Color</Label>
-                      <Input id="smokeAccentColor" type="color" value={smokeAccentColor} onChange={(e) => setSmokeAccentColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Smoke particle accent color" />
+                       <div className="flex items-center gap-2">
+                        <Input 
+                            id="smokeAccentColor" 
+                            type="color" 
+                            value={smokeAccentColor} 
+                            onChange={(e) => setSmokeAccentColor(e.target.value)} 
+                            className="w-10 h-10 p-1 cursor-pointer rounded-md border-2 border-input focus:border-primary focus:ring-primary"
+                            aria-label="Smoke particle accent color" 
+                        />
+                         <span className="text-sm text-muted-foreground">{smokeAccentColor.toUpperCase()}</span>
+                       </div>
                     </div>
 
                     {/* Sliders and Selects */}
@@ -258,11 +286,31 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                     {/* Colors in first row */}
                     <div className="lg:col-span-2">
                       <Label htmlFor="fireBaseColor" className="font-semibold text-sm mb-1 block">Particle Base Color</Label>
-                      <Input id="fireBaseColor" type="color" value={fireBaseColor} onChange={(e) => setFireBaseColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Fire particle base color" />
+                      <div className="flex items-center gap-2">
+                        <Input 
+                            id="fireBaseColor" 
+                            type="color" 
+                            value={fireBaseColor} 
+                            onChange={(e) => setFireBaseColor(e.target.value)} 
+                            className="w-10 h-10 p-1 cursor-pointer rounded-md border-2 border-input focus:border-primary focus:ring-primary"
+                            aria-label="Fire particle base color" 
+                        />
+                        <span className="text-sm text-muted-foreground">{fireBaseColor.toUpperCase()}</span>
+                      </div>
                     </div>
                     <div className="lg:col-span-2">
                       <Label htmlFor="fireAccentColor" className="font-semibold text-sm mb-1 block">Particle Accent Color</Label>
-                      <Input id="fireAccentColor" type="color" value={fireAccentColor} onChange={(e) => setFireAccentColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Fire particle accent color" />
+                      <div className="flex items-center gap-2">
+                        <Input 
+                            id="fireAccentColor" 
+                            type="color" 
+                            value={fireAccentColor} 
+                            onChange={(e) => setFireAccentColor(e.target.value)} 
+                            className="w-10 h-10 p-1 cursor-pointer rounded-md border-2 border-input focus:border-primary focus:ring-primary"
+                            aria-label="Fire particle accent color" 
+                        />
+                        <span className="text-sm text-muted-foreground">{fireAccentColor.toUpperCase()}</span>
+                      </div>
                     </div>
 
                     {/* Sliders and Selects */}
@@ -342,12 +390,6 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                 </div>
               </TabsContent>
               
-              <TabsContent value="presets-tab">
-                 <CardDescription>
-                      Simulation presets are now globally available at the top of the panel.
-                  </CardDescription>
-              </TabsContent>
-
             </Tabs>
           </AccordionContent>
         </AccordionItem>
