@@ -7,13 +7,15 @@ export interface SimulationPreset {
   description?: string;
   isSmokeEnabled: boolean;
   smokeDensity: number;
-  smokeColor: string;
+  smokeBaseColor: string;
+  smokeAccentColor: string;
   smokeSpeed: number;
   smokeSpread: number;
   smokeBlendMode: BlendMode;
   smokeSource: ParticleSource;
   isFireEnabled: boolean;
-  fireColor: string;
+  fireBaseColor: string;
+  fireAccentColor: string;
   fireDensity: number;
   fireSpeed: number;
   fireSpread: number;

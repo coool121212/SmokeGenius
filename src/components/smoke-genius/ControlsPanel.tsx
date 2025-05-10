@@ -23,6 +23,7 @@ import {
   Download,
   Cloud, 
   Palette,
+  Paintbrush, // Added for accent color
   Zap, 
   MoveHorizontal, 
   Play,
@@ -47,8 +48,10 @@ interface ControlsPanelProps {
   setIsSmokeEnabled: Dispatch<SetStateAction<boolean>>;
   smokeDensity: number;
   setSmokeDensity: Dispatch<SetStateAction<number>>;
-  smokeColor: string;
-  setSmokeColor: Dispatch<SetStateAction<string>>;
+  smokeBaseColor: string;
+  setSmokeBaseColor: Dispatch<SetStateAction<string>>;
+  smokeAccentColor: string;
+  setSmokeAccentColor: Dispatch<SetStateAction<string>>;
   smokeSpeed: number;
   setSmokeSpeed: Dispatch<SetStateAction<number>>;
   smokeSpread: number;
@@ -60,8 +63,10 @@ interface ControlsPanelProps {
 
   isFireEnabled: boolean;
   setIsFireEnabled: Dispatch<SetStateAction<boolean>>;
-  fireColor: string;
-  setFireColor: Dispatch<SetStateAction<string>>;
+  fireBaseColor: string;
+  setFireBaseColor: Dispatch<SetStateAction<string>>;
+  fireAccentColor: string;
+  setFireAccentColor: Dispatch<SetStateAction<string>>;
   fireDensity: number;
   setFireDensity: Dispatch<SetStateAction<number>>;
   fireSpeed: number;
@@ -92,14 +97,16 @@ interface ControlsPanelProps {
 const ControlsPanel: React.FC<ControlsPanelProps> = ({
   isSmokeEnabled, setIsSmokeEnabled,
   smokeDensity, setSmokeDensity,
-  smokeColor, setSmokeColor,
+  smokeBaseColor, setSmokeBaseColor,
+  smokeAccentColor, setSmokeAccentColor,
   smokeSpeed, setSmokeSpeed,
   smokeSpread, setSmokeSpread,
   smokeBlendMode, setSmokeBlendMode,
   smokeSource, setSmokeSource,
 
   isFireEnabled, setIsFireEnabled,
-  fireColor, setFireColor,
+  fireBaseColor, setFireBaseColor,
+  fireAccentColor, setFireAccentColor,
   fireDensity, setFireDensity,
   fireSpeed, setFireSpeed,
   fireSpread, setFireSpread,
@@ -169,9 +176,16 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <Palette className="w-5 h-5 text-accent" />
-                          <Label htmlFor="smokeColor" className="font-semibold text-sm">Color</Label>
+                          <Label htmlFor="smokeBaseColor" className="font-semibold text-sm">Base Color</Label>
                         </div>
-                        <Input id="smokeColor" type="color" value={smokeColor} onChange={(e) => setSmokeColor(e.target.value)} className="w-full h-10 p-1" aria-label="Smoke particle color" />
+                        <Input id="smokeBaseColor" type="color" value={smokeBaseColor} onChange={(e) => setSmokeBaseColor(e.target.value)} className="w-full h-10 p-1" aria-label="Smoke particle base color" />
+                      </div>
+                       <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Paintbrush className="w-5 h-5 text-accent" />
+                          <Label htmlFor="smokeAccentColor" className="font-semibold text-sm">Accent Color</Label>
+                        </div>
+                        <Input id="smokeAccentColor" type="color" value={smokeAccentColor} onChange={(e) => setSmokeAccentColor(e.target.value)} className="w-full h-10 p-1" aria-label="Smoke particle accent color" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -254,9 +268,16 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <Palette className="w-5 h-5 text-accent" />
-                          <Label htmlFor="fireColor" className="font-semibold text-sm">Color</Label>
+                          <Label htmlFor="fireBaseColor" className="font-semibold text-sm">Base Color</Label>
                         </div>
-                        <Input id="fireColor" type="color" value={fireColor} onChange={(e) => setFireColor(e.target.value)} className="w-full h-10 p-1" aria-label="Fire particle color" />
+                        <Input id="fireBaseColor" type="color" value={fireBaseColor} onChange={(e) => setFireBaseColor(e.target.value)} className="w-full h-10 p-1" aria-label="Fire particle base color" />
+                      </div>
+                       <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Paintbrush className="w-5 h-5 text-accent" />
+                          <Label htmlFor="fireAccentColor" className="font-semibold text-sm">Accent Color</Label>
+                        </div>
+                        <Input id="fireAccentColor" type="color" value={fireAccentColor} onChange={(e) => setFireAccentColor(e.target.value)} className="w-full h-10 p-1" aria-label="Fire particle accent color" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
