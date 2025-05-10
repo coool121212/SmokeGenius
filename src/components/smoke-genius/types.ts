@@ -6,21 +6,26 @@ export interface SimulationPreset {
   name: string;
   description?: string;
   isSmokeEnabled: boolean;
-  smokeDensity: number;
+  smokeDensity: number; // Renamed to Particle Count in UI
   smokeBaseColor: string;
   smokeAccentColor: string;
   smokeSpeed: number;
-  smokeSpread: number;
+  smokeSpread: number; // Renamed to Particle Size in UI
   smokeBlendMode: BlendMode;
   smokeSource: ParticleSource;
+  smokeOpacity: number;
+  smokeTurbulence: number;
+
   isFireEnabled: boolean;
   fireBaseColor: string;
   fireAccentColor: string;
-  fireDensity: number;
+  fireDensity: number; // Renamed to Particle Count in UI
   fireSpeed: number;
-  fireSpread: number;
+  fireSpread: number; // Renamed to Particle Size in UI
   fireParticleSource: ParticleSource;
   fireBlendMode: BlendMode;
+  fireOpacity: number;
+  fireTurbulence: number;
+
   backgroundColor: string;
 }
-
