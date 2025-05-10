@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
@@ -9,29 +8,29 @@ import { useToast } from "@/hooks/use-toast";
 
 const presets: SimulationPreset[] = [
   {
-    name: "Default",
-    description: "The standard starting simulation settings.",
+    name: "Default Realistic Smoke",
+    description: "Realistic, billowing white smoke against a dark background.",
     isSmokeEnabled: true,
-    smokeDensity: 2500, // Increased
-    smokeBaseColor: "#F5F5F5",
-    smokeAccentColor: "#DCDCDC",
-    smokeSpeed: 0.02,
-    smokeSpread: 3.0, // Increased
-    smokeBlendMode: "Normal",
-    smokeSource: "Center",
-    smokeOpacity: 0.7,
-    smokeTurbulence: 1,
-    isFireEnabled: true,
+    smokeDensity: 3500, // Increased for denser smoke
+    smokeBaseColor: "#FFFFFF", // Whiter smoke
+    smokeAccentColor: "#E0E0E0", // Light grey accent
+    smokeSpeed: 0.015, // Slower, more buoyant
+    smokeSpread: 3.5, // Larger particle size for billowing effect
+    smokeBlendMode: "Normal", // Essential for realistic smoke
+    smokeSource: "Bottom", 
+    smokeOpacity: 0.6, // Slightly lower opacity for softer edges
+    smokeTurbulence: 1.2, // Moderate turbulence
+    isFireEnabled: false, // Default fire off for this preset
     fireBaseColor: "#FFA500",
     fireAccentColor: "#FFD700",
-    fireDensity: 1500, // Increased
+    fireDensity: 0, 
     fireSpeed: 0.03,
-    fireSpread: 2.0, // Increased
+    fireSpread: 1.5, 
     fireParticleSource: "Bottom",
     fireBlendMode: "Additive",
-    fireOpacity: 0.8,
+    fireOpacity: 0,
     fireTurbulence: 1.2,
-    backgroundColor: "#000000",
+    backgroundColor: "#000000", // Black background
   },
   {
     name: "Gentle Campfire",
@@ -41,7 +40,7 @@ const presets: SimulationPreset[] = [
     smokeBaseColor: "#A9A9A9",
     smokeAccentColor: "#808080",
     smokeSpeed: 0.015,
-    smokeSpread: 2.2, // Adjusted
+    smokeSpread: 2.2, 
     smokeBlendMode: "Normal",
     smokeSource: "Center",
     smokeOpacity: 0.6,
@@ -51,7 +50,7 @@ const presets: SimulationPreset[] = [
     fireAccentColor: "#FFB347",
     fireDensity: 800,
     fireSpeed: 0.02,
-    fireSpread: 1.5, // Adjusted
+    fireSpread: 1.5, 
     fireParticleSource: "Bottom",
     fireBlendMode: "Additive",
     fireOpacity: 0.7,
@@ -66,7 +65,7 @@ const presets: SimulationPreset[] = [
     smokeBaseColor: "#333333",
     smokeAccentColor: "#1A1A1A",
     smokeSpeed: 0.05,
-    smokeSpread: 4.5, // Adjusted
+    smokeSpread: 4.5, 
     smokeBlendMode: "Normal",
     smokeSource: "Bottom",
     smokeOpacity: 0.9,
@@ -76,7 +75,7 @@ const presets: SimulationPreset[] = [
     fireAccentColor: "#FF6347",
     fireDensity: 4500,
     fireSpeed: 0.06,
-    fireSpread: 3.5, // Adjusted
+    fireSpread: 3.5, 
     fireParticleSource: "Bottom",
     fireBlendMode: "Additive",
     fireOpacity: 0.95,
@@ -91,8 +90,8 @@ const presets: SimulationPreset[] = [
     smokeBaseColor: "#E0E0E0",
     smokeAccentColor: "#B0B0B0",
     smokeSpeed: 0.01,
-    smokeSpread: 4.0, // Adjusted
-    smokeBlendMode: "Additive",
+    smokeSpread: 4.0, 
+    smokeBlendMode: "Normal", // Changed from Additive for denser fog
     smokeSource: "Bottom",
     smokeOpacity: 0.5,
     smokeTurbulence: 0.5,
@@ -116,7 +115,7 @@ const presets: SimulationPreset[] = [
     smokeBaseColor: "#8A2BE2", 
     smokeAccentColor: "#4B0082",
     smokeSpeed: 0.025,
-    smokeSpread: 3.5, // Adjusted
+    smokeSpread: 3.5, 
     smokeBlendMode: "Additive",
     smokeSource: "Center",
     smokeOpacity: 0.8,
@@ -126,7 +125,7 @@ const presets: SimulationPreset[] = [
     fireAccentColor: "#DA70D6",
     fireDensity: 500,
     fireSpeed: 0.04,
-    fireSpread: 1.2, // Adjusted
+    fireSpread: 1.2, 
     fireParticleSource: "Center",
     fireBlendMode: "Additive",
     fireOpacity: 0.6,
@@ -402,4 +401,3 @@ export default function SmokeGeniusPage() {
     </div>
   );
 }
-
