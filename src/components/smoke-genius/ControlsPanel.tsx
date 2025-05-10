@@ -30,7 +30,7 @@ import {
   PaintBucket, // Scene Tab Icon / Background Color
   Wand2, // Presets Tab Icon / Simulation Preset
   ArrowDownToLine,
-  MousePointer2,
+  MousePointer2, // Changed from MousePointerSquare
   Target,
 } from "lucide-react";
 
@@ -174,7 +174,7 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
               </div>
               <div>
                 <Label htmlFor="backgroundColor" className="font-semibold text-sm mb-1 block">Background Color</Label>
-                <Input id="backgroundColor" type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} className="w-full h-10 p-1" aria-label="Scene background color" />
+                <Input id="backgroundColor" type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Scene background color" />
               </div>
             </div>
 
@@ -197,11 +197,11 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                     {/* Colors in first row */}
                     <div className="lg:col-span-2">
                       <Label htmlFor="smokeBaseColor" className="font-semibold text-sm mb-1 block">Particle Base Color</Label>
-                      <Input id="smokeBaseColor" type="color" value={smokeBaseColor} onChange={(e) => setSmokeBaseColor(e.target.value)} className="w-full h-10 p-1" aria-label="Smoke particle base color" />
+                      <Input id="smokeBaseColor" type="color" value={smokeBaseColor} onChange={(e) => setSmokeBaseColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Smoke particle base color" />
                     </div>
                     <div className="lg:col-span-2">
                       <Label htmlFor="smokeAccentColor" className="font-semibold text-sm mb-1 block">Particle Accent Color</Label>
-                      <Input id="smokeAccentColor" type="color" value={smokeAccentColor} onChange={(e) => setSmokeAccentColor(e.target.value)} className="w-full h-10 p-1" aria-label="Smoke particle accent color" />
+                      <Input id="smokeAccentColor" type="color" value={smokeAccentColor} onChange={(e) => setSmokeAccentColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Smoke particle accent color" />
                     </div>
 
                     {/* Sliders and Selects */}
@@ -258,11 +258,11 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                     {/* Colors in first row */}
                     <div className="lg:col-span-2">
                       <Label htmlFor="fireBaseColor" className="font-semibold text-sm mb-1 block">Particle Base Color</Label>
-                      <Input id="fireBaseColor" type="color" value={fireBaseColor} onChange={(e) => setFireBaseColor(e.target.value)} className="w-full h-10 p-1" aria-label="Fire particle base color" />
+                      <Input id="fireBaseColor" type="color" value={fireBaseColor} onChange={(e) => setFireBaseColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Fire particle base color" />
                     </div>
                     <div className="lg:col-span-2">
                       <Label htmlFor="fireAccentColor" className="font-semibold text-sm mb-1 block">Particle Accent Color</Label>
-                      <Input id="fireAccentColor" type="color" value={fireAccentColor} onChange={(e) => setFireAccentColor(e.target.value)} className="w-full h-10 p-1" aria-label="Fire particle accent color" />
+                      <Input id="fireAccentColor" type="color" value={fireAccentColor} onChange={(e) => setFireAccentColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Fire particle accent color" />
                     </div>
 
                     {/* Sliders and Selects */}
