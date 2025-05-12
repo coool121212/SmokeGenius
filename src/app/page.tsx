@@ -21,6 +21,8 @@ const presets: SimulationPreset[] = [
     smokeSource: "Bottom",
     smokeOpacity: 0.6,
     smokeTurbulence: 1.2,
+    smokeDissipation: 0.2, // Default dissipation
+    smokeBuoyancy: 0.005, // Default buoyancy
     isFireEnabled: false,
     fireBaseColor: "#FFA500",
     fireAccentColor: "#FFD700",
@@ -48,6 +50,8 @@ const presets: SimulationPreset[] = [
     smokeSource: "Center",
     smokeOpacity: 0.6,
     smokeTurbulence: 0.8,
+    smokeDissipation: 0.15,
+    smokeBuoyancy: 0.008,
     isFireEnabled: true,
     fireBaseColor: "#FF8C00",
     fireAccentColor: "#FFB347",
@@ -75,6 +79,8 @@ const presets: SimulationPreset[] = [
     smokeSource: "Bottom",
     smokeOpacity: 0.9,
     smokeTurbulence: 2.5,
+    smokeDissipation: 0.1,
+    smokeBuoyancy: 0.01,
     isFireEnabled: true,
     fireBaseColor: "#FF4500",
     fireAccentColor: "#FF6347",
@@ -102,6 +108,8 @@ const presets: SimulationPreset[] = [
     smokeSource: "Bottom",
     smokeOpacity: 0.5,
     smokeTurbulence: 0.5,
+    smokeDissipation: 0.05,
+    smokeBuoyancy: 0.002,
     isFireEnabled: false,
     fireBaseColor: "#FFA500",
     fireAccentColor: "#FFD700",
@@ -129,6 +137,8 @@ const presets: SimulationPreset[] = [
     smokeSource: "Center",
     smokeOpacity: 0.8,
     smokeTurbulence: 1.5,
+    smokeDissipation: 0.25,
+    smokeBuoyancy: 0.003,
     isFireEnabled: true,
     fireBaseColor: "#FF00FF",
     fireAccentColor: "#DA70D6",
@@ -158,6 +168,8 @@ export default function SmokeGeniusPage() {
   const [smokeSource, setSmokeSource] = useState<ParticleSource>(presets[0].smokeSource);
   const [smokeOpacity, setSmokeOpacity] = useState(presets[0].smokeOpacity);
   const [smokeTurbulence, setSmokeTurbulence] = useState(presets[0].smokeTurbulence);
+  const [smokeDissipation, setSmokeDissipation] = useState(presets[0].smokeDissipation);
+  const [smokeBuoyancy, setSmokeBuoyancy] = useState(presets[0].smokeBuoyancy);
 
 
   // Fire States
@@ -297,6 +309,8 @@ export default function SmokeGeniusPage() {
     setSmokeSource(preset.smokeSource);
     setSmokeOpacity(preset.smokeOpacity);
     setSmokeTurbulence(preset.smokeTurbulence);
+    setSmokeDissipation(preset.smokeDissipation);
+    setSmokeBuoyancy(preset.smokeBuoyancy);
 
     setIsFireEnabled(preset.isFireEnabled);
     setFireBaseColor(preset.fireBaseColor);
@@ -340,6 +354,8 @@ export default function SmokeGeniusPage() {
           smokeSource={smokeSource}
           smokeOpacity={smokeOpacity}
           smokeTurbulence={smokeTurbulence}
+          smokeDissipation={smokeDissipation}
+          smokeBuoyancy={smokeBuoyancy}
 
           isFireEnabled={isFireEnabled}
           fireBaseColor={fireBaseColor}
@@ -381,6 +397,10 @@ export default function SmokeGeniusPage() {
         setSmokeOpacity={setSmokeOpacity}
         smokeTurbulence={smokeTurbulence}
         setSmokeTurbulence={setSmokeTurbulence}
+        smokeDissipation={smokeDissipation}
+        setSmokeDissipation={setSmokeDissipation}
+        smokeBuoyancy={smokeBuoyancy}
+        setSmokeBuoyancy={setSmokeBuoyancy}
 
         isFireEnabled={isFireEnabled}
         setIsFireEnabled={setIsFireEnabled}

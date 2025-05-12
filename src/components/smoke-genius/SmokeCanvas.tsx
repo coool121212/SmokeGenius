@@ -19,6 +19,8 @@ interface SmokeCanvasProps {
   smokeSource?: ParticleSource;
   smokeOpacity?: number;
   smokeTurbulence?: number;
+  smokeDissipation?: number;
+  smokeBuoyancy?: number;
   
   isFireEnabled?: boolean;
   fireBaseColor?: string;
@@ -55,6 +57,8 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   smokeSource = "Center",
   smokeOpacity = 0.7,
   smokeTurbulence = 1,
+  smokeDissipation = 0.1, 
+  smokeBuoyancy = 0.005, 
   
   isFireEnabled = true,
   fireBaseColor = '#FFA500',
@@ -415,11 +419,11 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
           const currentSmokeBaseC = new THREE_Module.Color(smokeBaseColor);
           const currentSmokeAccentC = new THREE_Module.Color(smokeAccentColor);
           const finalSmokeColor = new THREE_Module.Color();
-          const fullSmokeLifespan = BASE_SMOKE_LIFESPAN * 0.7 + BASE_SMOKE_LIFESPAN * 0.3;
-
+          
+          const baseLifespan = BASE_SMOKE_LIFESPAN * (1.0 - (smokeDissipation ?? 0) * 0.8); // Dissipation reduces base lifespan
 
           for (let i = 0; i < positions.count; i++) {
-            lives.setX(i, lives.getX(i) - delta * 15); 
+            lives.setX(i, lives.getX(i) - delta * 15 * (1 + (smokeDissipation ?? 0) * 2) ); // Dissipation accelerates life decay
 
             if (lives.getX(i) <= 0) { 
               let newX, newY, newZ;
@@ -443,7 +447,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
               }
               positions.setXYZ(i, newX, newY, newZ);
               velocities.setXYZ(i, (Math.random() - 0.5) * 0.025 * smokeSpread, Math.random() * smokeSpeed * 0.8 + smokeSpeed * 0.2, (Math.random() - 0.5) * 0.025 * smokeSpread);
-              lives.setX(i, fullSmokeLifespan);
+              lives.setX(i, baseLifespan * (0.7 + Math.random() * 0.6) ); // Add some randomness to lifespan too
               
               finalSmokeColor.copy(currentSmokeBaseC);
               finalSmokeColor.lerp(currentSmokeAccentC, Math.random() * 0.3);
@@ -453,21 +457,22 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
               particleSizesAttr.setX(i, (0.4 + Math.random() * 0.4) * (smokeSpread / 1.8)); 
 
             } else { 
-              const lifeRatio = Math.max(0, lives.getX(i) / fullSmokeLifespan); 
+              const lifeRatio = Math.max(0, lives.getX(i) / (baseLifespan * (0.7 + Math.random() * 0.6)) ); // Use the same random factor for consistency
               
               const baseTurbulenceEffect = smokeSpread * 0.020; 
               const turbulenceStrength = smokeTurbulence; 
-              const timeFactorTurbulence = (fullSmokeLifespan - lives.getX(i)) * 0.05 + positions.getY(i) * 0.08; 
+              const timeFactorTurbulence = (baseLifespan - lives.getX(i)) * 0.05 + positions.getY(i) * 0.08; 
               const xTurbulence = Math.sin(timeFactorTurbulence + i * 0.1) * baseTurbulenceEffect * turbulenceStrength * (1.0 - lifeRatio * 0.5); 
               const zTurbulence = Math.cos(timeFactorTurbulence * 0.7 + i * 0.07) * baseTurbulenceEffect * turbulenceStrength * (1.0 - lifeRatio * 0.5);
               
               const windEffectX = (windDirectionX || 0) * (windStrength || 0) * delta * 60;
+              const buoyancyEffectY = (smokeBuoyancy ?? 0) * delta * 60;
 
 
               positions.setXYZ(
                 i,
                 positions.getX(i) + velocities.getX(i) * delta * 60 + xTurbulence + windEffectX, 
-                positions.getY(i) + velocities.getY(i) * delta * 60,
+                positions.getY(i) + velocities.getY(i) * delta * 60 + buoyancyEffectY,
                 positions.getZ(i) + velocities.getZ(i) * delta * 60 + zTurbulence
               );
               
@@ -605,7 +610,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   }, [
       isThreeLoaded, actualSmokeParticleCount, actualFireParticleCount, onCanvasReady, initParticles, 
       backgroundColor, windDirectionX, windStrength,
-      smokeBaseColor, smokeAccentColor, smokeSpeed, smokeSpread, smokeOpacity, smokeTurbulence, smokeSource, smokeBlendMode, isSmokeEnabled, 
+      smokeBaseColor, smokeAccentColor, smokeSpeed, smokeSpread, smokeOpacity, smokeTurbulence, smokeSource, smokeBlendMode, isSmokeEnabled, smokeDissipation, smokeBuoyancy,
       fireBaseColor, fireAccentColor, fireSpeed, fireSpread, fireOpacity, fireTurbulence, fireParticleSource, fireBlendMode, isFireEnabled, 
       isPlaying
     ]); 

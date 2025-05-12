@@ -30,7 +30,9 @@ import {
   ArrowDownToLine,
   MousePointer2, 
   Target,
-  Wind, // Icon for Wind
+  Wind,
+  CloudOff, // Icon for Dissipation
+  ChevronsUp, // Icon for Buoyancy
 } from "lucide-react";
 
 interface ControlsPanelProps {
@@ -54,6 +56,10 @@ interface ControlsPanelProps {
   setSmokeOpacity: Dispatch<SetStateAction<number>>;
   smokeTurbulence: number;
   setSmokeTurbulence: Dispatch<SetStateAction<number>>;
+  smokeDissipation: number;
+  setSmokeDissipation: Dispatch<SetStateAction<number>>;
+  smokeBuoyancy: number;
+  setSmokeBuoyancy: Dispatch<SetStateAction<number>>;
 
   isFireEnabled: boolean;
   setIsFireEnabled: Dispatch<SetStateAction<boolean>>;
@@ -106,6 +112,8 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
   smokeSource, setSmokeSource,
   smokeOpacity, setSmokeOpacity,
   smokeTurbulence, setSmokeTurbulence,
+  smokeDissipation, setSmokeDissipation,
+  smokeBuoyancy, setSmokeBuoyancy,
 
   isFireEnabled, setIsFireEnabled,
   fireBaseColor, setFireBaseColor,
@@ -274,6 +282,20 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                     <div>
                       <Label htmlFor="smokeTurbulence" className="font-semibold text-sm mb-1 block">Turbulence</Label>
                       <Slider id="smokeTurbulence" min={0} max={5} step={0.1} value={[smokeTurbulence]} onValueChange={(v) => setSmokeTurbulence(v[0])} aria-label="Smoke turbulence"/>
+                    </div>
+                     <div>
+                      <Label htmlFor="smokeDissipation" className="font-semibold text-sm mb-1 block flex items-center">
+                        <CloudOff className="w-4 h-4 mr-1.5 text-primary/80"/> Dissipation
+                      </Label>
+                      <Slider id="smokeDissipation" min={0} max={1} step={0.01} value={[smokeDissipation]} onValueChange={(v) => setSmokeDissipation(v[0])} aria-label="Smoke dissipation rate"/>
+                       <span className="text-xs text-muted-foreground text-center block mt-1">{smokeDissipation.toFixed(2)}</span>
+                    </div>
+                    <div>
+                      <Label htmlFor="smokeBuoyancy" className="font-semibold text-sm mb-1 block flex items-center">
+                        <ChevronsUp className="w-4 h-4 mr-1.5 text-primary/80"/> Buoyancy
+                      </Label>
+                      <Slider id="smokeBuoyancy" min={0} max={0.05} step={0.001} value={[smokeBuoyancy]} onValueChange={(v) => setSmokeBuoyancy(v[0])} aria-label="Smoke buoyancy force"/>
+                      <span className="text-xs text-muted-foreground text-center block mt-1">{smokeBuoyancy.toFixed(3)}</span>
                     </div>
                     <div>
                       <Label className="font-semibold text-sm mb-1 block">Blend Mode</Label>
