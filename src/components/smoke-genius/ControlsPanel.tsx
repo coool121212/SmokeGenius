@@ -1,9 +1,10 @@
+
 "use client";
 
 import type { Dispatch, SetStateAction, MutableRefObject } from 'react';
 import type { SimulationPreset, BlendMode, ParticleSource } from './types';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -16,6 +17,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Separator } from "@/components/ui/separator";
 import {
   CircleDot, 
   StopCircle, 
@@ -31,7 +33,16 @@ import {
   Target,
   Wind,
   CloudOff, 
-  ChevronsUp, 
+  ChevronsUp,
+  Palette,
+  Paintbrush,
+  Layers, // Opacity
+  Maximize, // Size/Spread
+  Gauge, // Speed
+  Users, // Count/Density
+  Waves, // Turbulence
+  Blend, // Blend Mode
+  Sparkles, // For Presets
 } from "lucide-react";
 
 interface ControlsPanelProps {
@@ -165,7 +176,7 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 mb-6">
               <div>
-                <Label className="font-semibold text-sm mb-1 block">Simulation Preset</Label>
+                <Label className="font-semibold text-sm mb-1 block flex items-center"><Sparkles className="w-4 h-4 mr-1.5 text-primary/80"/>Simulation Preset</Label>
                 <Select onValueChange={(value) => {
                   const selectedPreset = presets.find(p => p.name === value);
                   if (selectedPreset) onApplyPreset(selectedPreset);
@@ -185,7 +196,7 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                 </Select>
               </div>
               <div>
-                <Label htmlFor="backgroundColor" className="font-semibold text-sm mb-1 block">Background Color</Label>
+                <Label htmlFor="backgroundColor" className="font-semibold text-sm mb-1 block flex items-center"><Palette className="w-4 h-4 mr-1.5 text-primary/80"/>Background Color</Label>
                  <div className="flex items-center gap-2">
                     <Input 
                         id="backgroundColor" 
@@ -230,94 +241,93 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                   <Switch id="smokeToggle" checked={isSmokeEnabled} onCheckedChange={setIsSmokeEnabled} aria-label="Toggle smoke simulation" />
                 </div>
                 {isSmokeEnabled && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
-                    {/* Colors in first row */}
-                    <div className="lg:col-span-2">
-                      <Label htmlFor="smokeBaseColor" className="font-semibold text-sm mb-1 block">Particle Base Color</Label>
-                       <div className="flex items-center gap-2">
-                        <Input 
-                            id="smokeBaseColor" 
-                            type="color" 
-                            value={smokeBaseColor} 
-                            onChange={(e) => setSmokeBaseColor(e.target.value)} 
-                            className="w-10 h-10 p-1 cursor-pointer rounded-md border-2 border-input focus:border-primary focus:ring-primary"
-                            aria-label="Smoke particle base color" 
-                        />
-                        <span className="text-sm text-muted-foreground">{smokeBaseColor.toUpperCase()}</span>
-                       </div>
-                    </div>
-                    <div className="lg:col-span-2">
-                      <Label htmlFor="smokeAccentColor" className="font-semibold text-sm mb-1 block">Particle Accent Color</Label>
-                       <div className="flex items-center gap-2">
-                        <Input 
-                            id="smokeAccentColor" 
-                            type="color" 
-                            value={smokeAccentColor} 
-                            onChange={(e) => setSmokeAccentColor(e.target.value)} 
-                            className="w-10 h-10 p-1 cursor-pointer rounded-md border-2 border-input focus:border-primary focus:ring-primary"
-                            aria-label="Smoke particle accent color" 
-                        />
-                         <span className="text-sm text-muted-foreground">{smokeAccentColor.toUpperCase()}</span>
-                       </div>
-                    </div>
-
-                    {/* Sliders and Selects */}
+                  <div className="space-y-6">
+                    {/* Visuals Group */}
                     <div>
-                      <Label htmlFor="smokeOpacity" className="font-semibold text-sm mb-1 block">Particle Opacity</Label>
-                      <Slider id="smokeOpacity" min={0} max={1} step={0.01} value={[smokeOpacity]} onValueChange={(v) => setSmokeOpacity(v[0])} aria-label="Smoke particle opacity"/>
-                      <span className="text-xs text-muted-foreground text-center block mt-1">{smokeOpacity.toFixed(2)}</span>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-2">Visual Properties</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
+                        <div className="lg:col-span-2">
+                          <Label htmlFor="smokeBaseColor" className="font-semibold text-sm mb-1 block flex items-center"><Palette className="w-4 h-4 mr-1.5 text-primary/80"/>Base Color</Label>
+                          <div className="flex items-center gap-2">
+                            <Input id="smokeBaseColor" type="color" value={smokeBaseColor} onChange={(e) => setSmokeBaseColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Smoke particle base color" />
+                            <span className="text-sm text-muted-foreground">{smokeBaseColor.toUpperCase()}</span>
+                          </div>
+                        </div>
+                        <div className="lg:col-span-2">
+                          <Label htmlFor="smokeAccentColor" className="font-semibold text-sm mb-1 block flex items-center"><Paintbrush className="w-4 h-4 mr-1.5 text-primary/80"/>Accent Color</Label>
+                          <div className="flex items-center gap-2">
+                            <Input id="smokeAccentColor" type="color" value={smokeAccentColor} onChange={(e) => setSmokeAccentColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Smoke particle accent color" />
+                            <span className="text-sm text-muted-foreground">{smokeAccentColor.toUpperCase()}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="smokeOpacity" className="font-semibold text-sm mb-1 block flex items-center"><Layers className="w-4 h-4 mr-1.5 text-primary/80"/>Opacity</Label>
+                          <Slider id="smokeOpacity" min={0} max={1} step={0.01} value={[smokeOpacity]} onValueChange={(v) => setSmokeOpacity(v[0])} aria-label="Smoke particle opacity"/>
+                          <span className="text-xs text-muted-foreground text-center block mt-1">{smokeOpacity.toFixed(2)}</span>
+                        </div>
+                        <div>
+                          <Label htmlFor="smokeParticleSize" className="font-semibold text-sm mb-1 block flex items-center"><Maximize className="w-4 h-4 mr-1.5 text-primary/80"/>Size</Label>
+                          <Slider id="smokeParticleSize" min={0.5} max={5} step={0.1} value={[smokeSpread]} onValueChange={(v) => setSmokeSpread(v[0])} aria-label="Smoke particle size (spread)" />
+                          <span className="text-xs text-muted-foreground text-center block mt-1">{smokeSpread.toFixed(1)}</span>
+                        </div>
+                      </div>
                     </div>
+                    <Separator/>
+                     {/* Behavior Group */}
                     <div>
-                      <Label htmlFor="smokeSpeed" className="font-semibold text-sm mb-1 block">Particle Speed</Label>
-                      <Slider id="smokeSpeed" min={0.005} max={0.1} step={0.005} value={[smokeSpeed]} onValueChange={(v) => setSmokeSpeed(v[0])} aria-label="Smoke particle speed" />
-                      <span className="text-xs text-muted-foreground text-center block mt-1">{smokeSpeed.toFixed(3)}</span>
+                        <h4 className="text-sm font-medium text-muted-foreground mb-2">Behavior Properties</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
+                            <div>
+                                <Label htmlFor="smokeSpeed" className="font-semibold text-sm mb-1 block flex items-center"><Gauge className="w-4 h-4 mr-1.5 text-primary/80"/>Speed</Label>
+                                <Slider id="smokeSpeed" min={0.005} max={0.1} step={0.005} value={[smokeSpeed]} onValueChange={(v) => setSmokeSpeed(v[0])} aria-label="Smoke particle speed" />
+                                <span className="text-xs text-muted-foreground text-center block mt-1">{smokeSpeed.toFixed(3)}</span>
+                            </div>
+                            <div>
+                                <Label htmlFor="smokeParticleCount" className="font-semibold text-sm mb-1 block flex items-center"><Users className="w-4 h-4 mr-1.5 text-primary/80"/>Count</Label>
+                                <Slider id="smokeParticleCount" min={100} max={8000} step={100} value={[smokeDensity]} onValueChange={(v) => setSmokeDensity(v[0])} aria-label="Smoke particle count (density)"/>
+                                <span className="text-xs text-muted-foreground text-center block mt-1">{smokeDensity}</span>
+                            </div>
+                            <div>
+                                <Label htmlFor="smokeTurbulence" className="font-semibold text-sm mb-1 block flex items-center"><Waves className="w-4 h-4 mr-1.5 text-primary/80"/>Turbulence</Label>
+                                <Slider id="smokeTurbulence" min={0} max={5} step={0.1} value={[smokeTurbulence]} onValueChange={(v) => setSmokeTurbulence(v[0])} aria-label="Smoke turbulence"/>
+                                <span className="text-xs text-muted-foreground text-center block mt-1">{smokeTurbulence.toFixed(1)}</span>
+                            </div>
+                        </div>
                     </div>
-                     <div>
-                      <Label htmlFor="smokeParticleSize" className="font-semibold text-sm mb-1 block">Particle Size</Label>
-                      <Slider id="smokeParticleSize" min={0.5} max={5} step={0.1} value={[smokeSpread]} onValueChange={(v) => setSmokeSpread(v[0])} aria-label="Smoke particle size (spread)" />
-                      <span className="text-xs text-muted-foreground text-center block mt-1">{smokeSpread.toFixed(1)}</span>
-                    </div>
+                    <Separator/>
+                    {/* Physics & Rendering Group */}
                     <div>
-                      <Label htmlFor="smokeParticleCount" className="font-semibold text-sm mb-1 block">Particle Count</Label>
-                      <Slider id="smokeParticleCount" min={100} max={8000} step={100} value={[smokeDensity]} onValueChange={(v) => setSmokeDensity(v[0])} aria-label="Smoke particle count (density)"/>
-                      <span className="text-xs text-muted-foreground text-center block mt-1">{smokeDensity}</span>
-                    </div>
-                    <div>
-                      <Label htmlFor="smokeTurbulence" className="font-semibold text-sm mb-1 block">Turbulence</Label>
-                      <Slider id="smokeTurbulence" min={0} max={5} step={0.1} value={[smokeTurbulence]} onValueChange={(v) => setSmokeTurbulence(v[0])} aria-label="Smoke turbulence"/>
-                      <span className="text-xs text-muted-foreground text-center block mt-1">{smokeTurbulence.toFixed(1)}</span>
-                    </div>
-                     <div>
-                      <Label htmlFor="smokeDissipation" className="font-semibold text-sm mb-1 block flex items-center">
-                        <CloudOff className="w-4 h-4 mr-1.5 text-primary/80"/> Dissipation
-                      </Label>
-                      <Slider id="smokeDissipation" min={0} max={1} step={0.01} value={[smokeDissipation]} onValueChange={(v) => setSmokeDissipation(v[0])} aria-label="Smoke dissipation rate"/>
-                       <span className="text-xs text-muted-foreground text-center block mt-1">{smokeDissipation.toFixed(2)}</span>
-                    </div>
-                    <div>
-                      <Label htmlFor="smokeBuoyancy" className="font-semibold text-sm mb-1 block flex items-center">
-                        <ChevronsUp className="w-4 h-4 mr-1.5 text-primary/80"/> Buoyancy
-                      </Label>
-                      <Slider id="smokeBuoyancy" min={0} max={0.05} step={0.001} value={[smokeBuoyancy]} onValueChange={(v) => setSmokeBuoyancy(v[0])} aria-label="Smoke buoyancy force"/>
-                      <span className="text-xs text-muted-foreground text-center block mt-1">{smokeBuoyancy.toFixed(3)}</span>
-                    </div>
-                    <div>
-                      <Label className="font-semibold text-sm mb-1 block">Blend Mode</Label>
-                      <Select value={smokeBlendMode} onValueChange={(value: BlendMode) => setSmokeBlendMode(value)}>
-                        <SelectTrigger aria-label="Smoke blend mode"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {blendModeOptions.map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="font-semibold text-sm mb-1 block">Particle Source</Label>
-                      <Select value={smokeSource} onValueChange={(value: ParticleSource) => setSmokeSource(value)}>
-                        <SelectTrigger aria-label="Smoke particle source"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {particleSourceOptions.map(option => <SelectItem key={option.value} value={option.value}><div className="flex items-center gap-2"><option.icon className="w-4 h-4" />{option.label}</div></SelectItem>)}
-                        </SelectContent>
-                      </Select>
+                        <h4 className="text-sm font-medium text-muted-foreground mb-2">Physics & Rendering</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
+                            <div>
+                                <Label htmlFor="smokeDissipation" className="font-semibold text-sm mb-1 block flex items-center"><CloudOff className="w-4 h-4 mr-1.5 text-primary/80"/> Dissipation</Label>
+                                <Slider id="smokeDissipation" min={0} max={1} step={0.01} value={[smokeDissipation]} onValueChange={(v) => setSmokeDissipation(v[0])} aria-label="Smoke dissipation rate"/>
+                                <span className="text-xs text-muted-foreground text-center block mt-1">{smokeDissipation.toFixed(2)}</span>
+                            </div>
+                            <div>
+                                <Label htmlFor="smokeBuoyancy" className="font-semibold text-sm mb-1 block flex items-center"><ChevronsUp className="w-4 h-4 mr-1.5 text-primary/80"/> Buoyancy</Label>
+                                <Slider id="smokeBuoyancy" min={0} max={0.05} step={0.001} value={[smokeBuoyancy]} onValueChange={(v) => setSmokeBuoyancy(v[0])} aria-label="Smoke buoyancy force"/>
+                                <span className="text-xs text-muted-foreground text-center block mt-1">{smokeBuoyancy.toFixed(3)}</span>
+                            </div>
+                            <div>
+                                <Label className="font-semibold text-sm mb-1 block flex items-center"><Blend className="w-4 h-4 mr-1.5 text-primary/80"/>Blend Mode</Label>
+                                <Select value={smokeBlendMode} onValueChange={(value: BlendMode) => setSmokeBlendMode(value)}>
+                                <SelectTrigger aria-label="Smoke blend mode"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    {blendModeOptions.map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                                </SelectContent>
+                                </Select>
+                            </div>
+                            <div>
+                                <Label className="font-semibold text-sm mb-1 block flex items-center"><Target className="w-4 h-4 mr-1.5 text-primary/80"/>Particle Source</Label>
+                                <Select value={smokeSource} onValueChange={(value: ParticleSource) => setSmokeSource(value)}>
+                                <SelectTrigger aria-label="Smoke particle source"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    {particleSourceOptions.map(option => <SelectItem key={option.value} value={option.value}><div className="flex items-center gap-2"><option.icon className="w-4 h-4" />{option.label}</div></SelectItem>)}
+                                </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
                     </div>
                   </div>
                 )}
@@ -330,80 +340,83 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                   <Switch id="fireToggle" checked={isFireEnabled} onCheckedChange={setIsFireEnabled} aria-label="Toggle fire simulation" />
                 </div>
                 {isFireEnabled && (
-                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
-                    {/* Colors in first row */}
-                    <div className="lg:col-span-2">
-                      <Label htmlFor="fireBaseColor" className="font-semibold text-sm mb-1 block">Particle Base Color</Label>
-                      <div className="flex items-center gap-2">
-                        <Input 
-                            id="fireBaseColor" 
-                            type="color" 
-                            value={fireBaseColor} 
-                            onChange={(e) => setFireBaseColor(e.target.value)} 
-                            className="w-10 h-10 p-1 cursor-pointer rounded-md border-2 border-input focus:border-primary focus:ring-primary"
-                            aria-label="Fire particle base color" 
-                        />
-                        <span className="text-sm text-muted-foreground">{fireBaseColor.toUpperCase()}</span>
-                      </div>
-                    </div>
-                    <div className="lg:col-span-2">
-                      <Label htmlFor="fireAccentColor" className="font-semibold text-sm mb-1 block">Particle Accent Color</Label>
-                      <div className="flex items-center gap-2">
-                        <Input 
-                            id="fireAccentColor" 
-                            type="color" 
-                            value={fireAccentColor} 
-                            onChange={(e) => setFireAccentColor(e.target.value)} 
-                            className="w-10 h-10 p-1 cursor-pointer rounded-md border-2 border-input focus:border-primary focus:ring-primary"
-                            aria-label="Fire particle accent color" 
-                        />
-                        <span className="text-sm text-muted-foreground">{fireAccentColor.toUpperCase()}</span>
-                      </div>
-                    </div>
-
-                    {/* Sliders and Selects */}
+                   <div className="space-y-6">
+                     {/* Visuals Group */}
                     <div>
-                      <Label htmlFor="fireOpacity" className="font-semibold text-sm mb-1 block">Particle Opacity</Label>
-                      <Slider id="fireOpacity" min={0} max={1} step={0.01} value={[fireOpacity]} onValueChange={(v) => setFireOpacity(v[0])} aria-label="Fire particle opacity"/>
-                      <span className="text-xs text-muted-foreground text-center block mt-1">{fireOpacity.toFixed(2)}</span>
+                        <h4 className="text-sm font-medium text-muted-foreground mb-2">Visual Properties</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
+                            <div className="lg:col-span-2">
+                                <Label htmlFor="fireBaseColor" className="font-semibold text-sm mb-1 block flex items-center"><Palette className="w-4 h-4 mr-1.5 text-primary/80"/>Base Color</Label>
+                                <div className="flex items-center gap-2">
+                                    <Input id="fireBaseColor" type="color" value={fireBaseColor} onChange={(e) => setFireBaseColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Fire particle base color" />
+                                    <span className="text-sm text-muted-foreground">{fireBaseColor.toUpperCase()}</span>
+                                </div>
+                            </div>
+                            <div className="lg:col-span-2">
+                                <Label htmlFor="fireAccentColor" className="font-semibold text-sm mb-1 block flex items-center"><Paintbrush className="w-4 h-4 mr-1.5 text-primary/80"/>Accent Color</Label>
+                                <div className="flex items-center gap-2">
+                                    <Input id="fireAccentColor" type="color" value={fireAccentColor} onChange={(e) => setFireAccentColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Fire particle accent color" />
+                                    <span className="text-sm text-muted-foreground">{fireAccentColor.toUpperCase()}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <Label htmlFor="fireOpacity" className="font-semibold text-sm mb-1 block flex items-center"><Layers className="w-4 h-4 mr-1.5 text-primary/80"/>Opacity</Label>
+                                <Slider id="fireOpacity" min={0} max={1} step={0.01} value={[fireOpacity]} onValueChange={(v) => setFireOpacity(v[0])} aria-label="Fire particle opacity"/>
+                                <span className="text-xs text-muted-foreground text-center block mt-1">{fireOpacity.toFixed(2)}</span>
+                            </div>
+                            <div>
+                                <Label htmlFor="fireParticleSize" className="font-semibold text-sm mb-1 block flex items-center"><Maximize className="w-4 h-4 mr-1.5 text-primary/80"/>Size</Label>
+                                <Slider id="fireParticleSize" min={0.2} max={3} step={0.1} value={[fireSpread]} onValueChange={(v) => setFireSpread(v[0])} aria-label="Fire particle size (spread)" />
+                                <span className="text-xs text-muted-foreground text-center block mt-1">{fireSpread.toFixed(1)}</span>
+                            </div>
+                        </div>
                     </div>
+                    <Separator/>
+                    {/* Behavior Group */}
                     <div>
-                      <Label htmlFor="fireSpeed" className="font-semibold text-sm mb-1 block">Particle Speed</Label>
-                      <Slider id="fireSpeed" min={0.01} max={0.2} step={0.005} value={[fireSpeed]} onValueChange={(v) => setFireSpeed(v[0])} aria-label="Fire particle speed" />
-                      <span className="text-xs text-muted-foreground text-center block mt-1">{fireSpeed.toFixed(3)}</span>
+                        <h4 className="text-sm font-medium text-muted-foreground mb-2">Behavior Properties</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
+                            <div>
+                                <Label htmlFor="fireSpeed" className="font-semibold text-sm mb-1 block flex items-center"><Gauge className="w-4 h-4 mr-1.5 text-primary/80"/>Speed</Label>
+                                <Slider id="fireSpeed" min={0.01} max={0.2} step={0.005} value={[fireSpeed]} onValueChange={(v) => setFireSpeed(v[0])} aria-label="Fire particle speed" />
+                                <span className="text-xs text-muted-foreground text-center block mt-1">{fireSpeed.toFixed(3)}</span>
+                            </div>
+                            <div>
+                                <Label htmlFor="fireParticleCount" className="font-semibold text-sm mb-1 block flex items-center"><Users className="w-4 h-4 mr-1.5 text-primary/80"/>Count</Label>
+                                <Slider id="fireParticleCount" min={100} max={5000} step={50} value={[fireDensity]} onValueChange={(v) => setFireDensity(v[0])} aria-label="Fire particle count (intensity)"/>
+                                <span className="text-xs text-muted-foreground text-center block mt-1">{fireDensity}</span>
+                            </div>
+                            <div>
+                                <Label htmlFor="fireTurbulence" className="font-semibold text-sm mb-1 block flex items-center"><Waves className="w-4 h-4 mr-1.5 text-primary/80"/>Turbulence</Label>
+                                <Slider id="fireTurbulence" min={0} max={5} step={0.1} value={[fireTurbulence]} onValueChange={(v) => setFireTurbulence(v[0])} aria-label="Fire turbulence"/>
+                                <span className="text-xs text-muted-foreground text-center block mt-1">{fireTurbulence.toFixed(1)}</span>
+                            </div>
+                        </div>
                     </div>
-                     <div>
-                      <Label htmlFor="fireParticleSize" className="font-semibold text-sm mb-1 block">Particle Size</Label>
-                      <Slider id="fireParticleSize" min={0.2} max={3} step={0.1} value={[fireSpread]} onValueChange={(v) => setFireSpread(v[0])} aria-label="Fire particle size (spread)" />
-                      <span className="text-xs text-muted-foreground text-center block mt-1">{fireSpread.toFixed(1)}</span>
-                    </div>
+                    <Separator/>
+                    {/* Source & Rendering Group */}
                     <div>
-                      <Label htmlFor="fireParticleCount" className="font-semibold text-sm mb-1 block">Particle Count</Label>
-                      <Slider id="fireParticleCount" min={100} max={5000} step={50} value={[fireDensity]} onValueChange={(v) => setFireDensity(v[0])} aria-label="Fire particle count (intensity)"/>
-                      <span className="text-xs text-muted-foreground text-center block mt-1">{fireDensity}</span>
-                    </div>
-                    <div>
-                      <Label htmlFor="fireTurbulence" className="font-semibold text-sm mb-1 block">Turbulence</Label>
-                      <Slider id="fireTurbulence" min={0} max={5} step={0.1} value={[fireTurbulence]} onValueChange={(v) => setFireTurbulence(v[0])} aria-label="Fire turbulence"/>
-                      <span className="text-xs text-muted-foreground text-center block mt-1">{fireTurbulence.toFixed(1)}</span>
-                    </div>
-                    <div>
-                      <Label className="font-semibold text-sm mb-1 block">Blend Mode</Label>
-                      <Select value={fireBlendMode} onValueChange={(value: BlendMode) => setFireBlendMode(value)}>
-                        <SelectTrigger aria-label="Fire blend mode"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {blendModeOptions.map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="font-semibold text-sm mb-1 block">Particle Source</Label>
-                      <Select value={fireParticleSource} onValueChange={(value: ParticleSource) => setFireParticleSource(value)}>
-                        <SelectTrigger aria-label="Fire particle source"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {particleSourceOptions.map(option => <SelectItem key={option.value} value={option.value}><div className="flex items-center gap-2"><option.icon className="w-4 h-4" />{option.label}</div></SelectItem>)}
-                        </SelectContent>
-                      </Select>
+                         <h4 className="text-sm font-medium text-muted-foreground mb-2">Source & Rendering</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
+                            <div>
+                                <Label className="font-semibold text-sm mb-1 block flex items-center"><Blend className="w-4 h-4 mr-1.5 text-primary/80"/>Blend Mode</Label>
+                                <Select value={fireBlendMode} onValueChange={(value: BlendMode) => setFireBlendMode(value)}>
+                                <SelectTrigger aria-label="Fire blend mode"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    {blendModeOptions.map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                                </SelectContent>
+                                </Select>
+                            </div>
+                            <div>
+                                <Label className="font-semibold text-sm mb-1 block flex items-center"><Target className="w-4 h-4 mr-1.5 text-primary/80"/>Particle Source</Label>
+                                <Select value={fireParticleSource} onValueChange={(value: ParticleSource) => setFireParticleSource(value)}>
+                                <SelectTrigger aria-label="Fire particle source"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    {particleSourceOptions.map(option => <SelectItem key={option.value} value={option.value}><div className="flex items-center gap-2"><option.icon className="w-4 h-4" />{option.label}</div></SelectItem>)}
+                                </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
                     </div>
                   </div>
                 )}
@@ -452,3 +465,4 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
 };
 
 export default ControlsPanel;
+
