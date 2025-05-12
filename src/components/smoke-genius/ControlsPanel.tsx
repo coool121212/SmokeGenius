@@ -34,8 +34,8 @@ import {
   Wind,
   CloudOff, 
   ChevronsUp,
-  Palette,
-  Paintbrush,
+  Palette, // For Base Color & Background Color
+  Paintbrush, // For Accent Color
   Layers, // Opacity
   Maximize, // Size/Spread
   Gauge, // Speed
