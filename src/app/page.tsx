@@ -13,7 +13,7 @@ const presets: SimulationPreset[] = [
     name: "Default Realistic Smoke",
     description: "Realistic, billowing white smoke against a dark background.",
     isSmokeEnabled: true,
-    smokeDensity: 6500,
+    smokeDensity: 5000, // Adjusted to new max
     smokeBaseColor: "#FFFFFF",
     smokeAccentColor: "#E0E0E0",
     smokeSpeed: 0.015,
@@ -37,13 +37,13 @@ const presets: SimulationPreset[] = [
     backgroundColor: "#000000",
     windDirectionX: 0,
     windStrength: 0,
-    particleText: "", // Default preset has no text
+    particleText: "",
   },
   {
     name: "Gentle Campfire",
     description: "A calm campfire with light, greyish smoke.",
     isSmokeEnabled: true,
-    smokeDensity: 1500,
+    smokeDensity: 1500, // Keep low
     smokeBaseColor: "#A9A9A9",
     smokeAccentColor: "#808080",
     smokeSpeed: 0.015,
@@ -57,7 +57,7 @@ const presets: SimulationPreset[] = [
     isFireEnabled: true,
     fireBaseColor: "#FF8C00",
     fireAccentColor: "#FFB347",
-    fireDensity: 800,
+    fireDensity: 800, // Keep low
     fireSpeed: 0.02,
     fireSpread: 1.5,
     fireParticleSource: "Bottom",
@@ -73,7 +73,7 @@ const presets: SimulationPreset[] = [
     name: "Volcanic Eruption",
     description: "Intense, dark smoke and fiery lava-like effects.",
     isSmokeEnabled: true,
-    smokeDensity: 7000,
+    smokeDensity: 5000, // Adjusted to new max
     smokeBaseColor: "#333333",
     smokeAccentColor: "#1A1A1A",
     smokeSpeed: 0.05,
@@ -87,7 +87,7 @@ const presets: SimulationPreset[] = [
     isFireEnabled: true,
     fireBaseColor: "#FF4500",
     fireAccentColor: "#FF6347",
-    fireDensity: 4500,
+    fireDensity: 3000, // Adjusted to new max
     fireSpeed: 0.06,
     fireSpread: 3.5,
     fireParticleSource: "Bottom",
@@ -103,7 +103,7 @@ const presets: SimulationPreset[] = [
     name: "Mystic Fog",
     description: "Dense, ethereal light grey fog, no fire.",
     isSmokeEnabled: true,
-    smokeDensity: 5000,
+    smokeDensity: 4500, // Adjusted slightly below max
     smokeBaseColor: "#E0E0E0",
     smokeAccentColor: "#B0B0B0",
     smokeSpeed: 0.01,
@@ -133,7 +133,7 @@ const presets: SimulationPreset[] = [
     name: "Cyberpunk Smog",
     description: "Dense, neon-accented smoke in a dark city.",
     isSmokeEnabled: true,
-    smokeDensity: 6000,
+    smokeDensity: 5000, // Adjusted to new max
     smokeBaseColor: "#8A2BE2", // Purple
     smokeAccentColor: "#00FFFF", // Cyan accent
     smokeSpeed: 0.025,
@@ -147,7 +147,7 @@ const presets: SimulationPreset[] = [
     isFireEnabled: true,
     fireBaseColor: "#FF00FF", // Magenta fire
     fireAccentColor: "#DA70D6", // Orchid accent
-    fireDensity: 500,
+    fireDensity: 500, // Keep low
     fireSpeed: 0.04,
     fireSpread: 1.2,
     fireParticleSource: "Center",
@@ -164,18 +164,18 @@ const presets: SimulationPreset[] = [
     description: "Particles forming the word 'SMOKE'.",
     particleText: "SMOKE", // Add text here
     isSmokeEnabled: true,
-    smokeDensity: 5000, // Adjust density for text visibility
+    smokeDensity: 4000, // Reduced density for text visibility & performance
     smokeBaseColor: "#FFFFFF",
     smokeAccentColor: "#CCCCCC",
-    smokeSpeed: 0.005, // Slower speed to hold shape longer
-    smokeSpread: 0.5,   // Smaller spread for tighter text
+    smokeSpeed: 0.005,
+    smokeSpread: 0.5,
     smokeBlendMode: "Normal",
-    smokeSource: "Bottom", // Source is overridden by text
+    smokeSource: "Bottom",
     smokeOpacity: 0.7,
-    smokeTurbulence: 0.3, // Lower turbulence to hold shape
+    smokeTurbulence: 0.3,
     smokeDissipation: 0.1,
-    smokeBuoyancy: 0.001, // Minimal buoyancy
-    isFireEnabled: false, // Disable fire for text demo clarity
+    smokeBuoyancy: 0.001,
+    isFireEnabled: false,
     fireBaseColor: "#FFA500",
     fireAccentColor: "#FFD700",
     fireDensity: 0,
@@ -257,7 +257,6 @@ export default function SmokeGeniusPage() {
 
     try {
       const stream = canvasRef.current.captureStream(30); // 30 FPS
-      // Prioritize VP9 for better quality/compression if available
       const mimeTypes = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm;codecs=h264,opus', 'video/mp4', 'video/webm'];
       let selectedMimeType = '';
       for (const mimeType of mimeTypes) {
@@ -274,8 +273,6 @@ export default function SmokeGeniusPage() {
       }
       console.log("Using MIME type:", selectedMimeType);
 
-
-      // Adjust bitrate based on expected complexity/resolution (optional)
       const videoBitsPerSecond = 2500000; // 2.5 Mbps
 
       mediaRecorderRef.current = new MediaRecorder(stream, {
@@ -289,7 +286,6 @@ export default function SmokeGeniusPage() {
       mediaRecorderRef.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
           recordedChunksRef.current.push(event.data);
-          // console.log(`Recorded chunk size: ${event.data.size}`);
         }
       };
 
@@ -303,7 +299,6 @@ export default function SmokeGeniusPage() {
 
       mediaRecorderRef.current.onerror = (event: Event) => {
         let message = "An unknown recording error occurred.";
-        // More specific error checking
         if (event instanceof (window as any).MediaRecorderErrorEvent) {
            message = `Recording error: ${event.error.name} - ${event.error.message}`;
         } else if (event instanceof ErrorEvent) { // Generic ErrorEvent
@@ -311,13 +306,13 @@ export default function SmokeGeniusPage() {
         }
         console.error("MediaRecorder error:", event);
         toast({ title: "Recording Error", description: message, variant: "destructive" });
-        setIsRecording(false); // Ensure state is updated on error
+        setIsRecording(false);
       };
 
 
       mediaRecorderRef.current.start();
       setIsRecording(true);
-      setRecordedVideoUrl(null); // Clear previous recording URL
+      setRecordedVideoUrl(null);
       toast({ title: "Recording Started", description: "Capturing simulation..." });
 
     } catch (error) {
@@ -329,13 +324,12 @@ export default function SmokeGeniusPage() {
       toast({ title: "Recording Error", description: message, variant: "destructive" });
       setIsRecording(false);
     }
-  }, [toast]); // Dependency array includes toast for notifications
+  }, [toast]);
 
   const handleStopRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
        try {
            mediaRecorderRef.current.stop();
-           // onstop handler will set the URL and show toast
        } catch (error) {
            console.error("Error stopping recording:", error);
            toast({ title: "Error", description: "Failed to stop recording.", variant: "destructive" });
@@ -343,24 +337,22 @@ export default function SmokeGeniusPage() {
     } else {
         console.warn("Stop recording called but recorder is not active.");
     }
-    // Always set recording state to false, even if stop fails, to reset UI
     setIsRecording(false);
-  }, [toast]); // Added toast dependency
+  }, [toast]);
 
   const handleDownloadRecording = useCallback(() => {
     if (recordedVideoUrl && mediaRecorderRef.current) {
       const a = document.createElement('a');
       a.href = recordedVideoUrl;
-      const mimeType = mediaRecorderRef.current.mimeType || 'video/webm'; // Fallback mime type
-      // Determine extension more robustly
+      const mimeType = mediaRecorderRef.current.mimeType || 'video/webm';
       let extension = 'webm';
       if (mimeType.includes('mp4')) {
         extension = 'mp4';
       } else if (mimeType.includes('webm')) {
         extension = 'webm';
-      } // Add more types if needed (e.g., 'ogg', 'mov')
+      }
 
-      a.download = `smoke_simulation_${Date.now()}.${extension}`; // Add timestamp
+      a.download = `smoke_simulation_${Date.now()}.${extension}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -368,10 +360,10 @@ export default function SmokeGeniusPage() {
     } else {
       toast({ title: "No Recording", description: "No video available to download.", variant: "destructive" });
     }
-  }, [recordedVideoUrl, toast]); // Added toast dependency
+  }, [recordedVideoUrl, toast]);
 
   const applyPreset = useCallback((preset: SimulationPreset) => {
-    setCurrentPreset(preset); // Store the current preset if needed later
+    setCurrentPreset(preset);
 
     // Apply Smoke settings
     setIsSmokeEnabled(preset.isSmokeEnabled);
@@ -386,7 +378,7 @@ export default function SmokeGeniusPage() {
     setSmokeTurbulence(preset.smokeTurbulence);
     setSmokeDissipation(preset.smokeDissipation);
     setSmokeBuoyancy(preset.smokeBuoyancy);
-    setParticleText(preset.particleText || ""); // Apply text from preset or clear
+    setParticleText(preset.particleText || "");
 
     // Apply Fire settings
     setIsFireEnabled(preset.isFireEnabled);
@@ -406,30 +398,26 @@ export default function SmokeGeniusPage() {
     setWindStrength(preset.windStrength);
 
     toast({ title: "Preset Applied", description: `"${preset.name}" preset loaded.` });
-  }, [toast]); // Dependency: toast
+  }, [toast]);
 
   // --- Effects ---
   useEffect(() => {
-    // Apply initial preset on mount
     applyPreset(presets[0]);
      // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run only once on mount
+  }, []);
 
   useEffect(() => {
-    // Update body background color when the state changes
     document.body.style.backgroundColor = backgroundColor;
   }, [backgroundColor]);
 
    useEffect(() => {
-    // Cleanup Object URL when component unmounts or URL changes
-    let currentUrl = recordedVideoUrl; // Capture value at the time effect runs
+    let currentUrl = recordedVideoUrl;
     return () => {
       if (currentUrl) {
-        // console.log("Revoking Object URL:", currentUrl);
         URL.revokeObjectURL(currentUrl);
       }
     };
-  }, [recordedVideoUrl]); // Dependency: recordedVideoUrl
+  }, [recordedVideoUrl]);
 
   // --- Render ---
   return (
@@ -461,8 +449,8 @@ export default function SmokeGeniusPage() {
           setSmokeDissipation={setSmokeDissipation}
           smokeBuoyancy={smokeBuoyancy}
           setSmokeBuoyancy={setSmokeBuoyancy}
-          particleText={particleText} // Pass text state
-          setParticleText={setParticleText} // Pass text setter
+          particleText={particleText}
+          setParticleText={setParticleText}
 
           // Fire Props
           isFireEnabled={isFireEnabled}
@@ -524,7 +512,7 @@ export default function SmokeGeniusPage() {
               smokeTurbulence={smokeTurbulence}
               smokeDissipation={smokeDissipation}
               smokeBuoyancy={smokeBuoyancy}
-              particleText={particleText} // Pass text state
+              particleText={particleText}
 
               // Fire Props
               isFireEnabled={isFireEnabled}
