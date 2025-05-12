@@ -37,6 +37,7 @@ const presets: SimulationPreset[] = [
     windDirectionX: 0,
     windStrength: 0,
     particleText: "",
+    persistTextShape: false, // Add persistTextShape to presets
   },
   {
     name: "Gentle Campfire",
@@ -67,6 +68,7 @@ const presets: SimulationPreset[] = [
     windDirectionX: 0.05,
     windStrength: 0.005,
      particleText: "",
+     persistTextShape: false,
   },
   {
     name: "Volcanic Eruption",
@@ -97,6 +99,7 @@ const presets: SimulationPreset[] = [
     windDirectionX: 0.1,
     windStrength: 0.01,
      particleText: "",
+     persistTextShape: false,
   },
   {
     name: "Mystic Fog",
@@ -127,6 +130,7 @@ const presets: SimulationPreset[] = [
     windDirectionX: -0.02,
     windStrength: 0.003,
      particleText: "",
+     persistTextShape: false,
   },
   {
     name: "Cyberpunk Smog",
@@ -157,6 +161,7 @@ const presets: SimulationPreset[] = [
     windDirectionX: 0,
     windStrength: 0,
      particleText: "",
+     persistTextShape: false,
   },
    {
     name: "Text Shape Demo",
@@ -187,6 +192,7 @@ const presets: SimulationPreset[] = [
     backgroundColor: "#111111",
     windDirectionX: 0,
     windStrength: 0,
+    persistTextShape: true, // Example: Persist the text shape
   },
 ];
 
@@ -209,6 +215,7 @@ export default function SmokeGeniusPage() {
   const [smokeDissipation, setSmokeDissipation] = useState(currentPreset.smokeDissipation);
   const [smokeBuoyancy, setSmokeBuoyancy] = useState(currentPreset.smokeBuoyancy);
   const [particleText, setParticleText] = useState(currentPreset.particleText || ""); // New state for text
+  const [persistTextShape, setPersistTextShape] = useState(currentPreset.persistTextShape ?? false); // New state for persisting text
 
   // Fire States
   const [isFireEnabled, setIsFireEnabled] = useState(currentPreset.isFireEnabled);
@@ -378,6 +385,7 @@ export default function SmokeGeniusPage() {
     setSmokeDissipation(preset.smokeDissipation);
     setSmokeBuoyancy(preset.smokeBuoyancy);
     setParticleText(preset.particleText || "");
+    setPersistTextShape(preset.persistTextShape ?? false); // Apply persist setting
 
     // Apply Fire settings
     setIsFireEnabled(preset.isFireEnabled);
@@ -453,6 +461,8 @@ export default function SmokeGeniusPage() {
           setSmokeBuoyancy={setSmokeBuoyancy}
           particleText={particleText}
           setParticleText={setParticleText}
+          persistTextShape={persistTextShape} // Pass state
+          setPersistTextShape={setPersistTextShape} // Pass setter
 
           // Fire Props
           isFireEnabled={isFireEnabled}
@@ -515,6 +525,7 @@ export default function SmokeGeniusPage() {
               smokeDissipation={smokeDissipation}
               smokeBuoyancy={smokeBuoyancy}
               particleText={particleText}
+              persistTextShape={persistTextShape} // Pass state
 
               // Fire Props
               isFireEnabled={isFireEnabled}

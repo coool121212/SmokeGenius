@@ -6,6 +6,7 @@ export interface SimulationPreset {
   name: string;
   description?: string;
   particleText?: string; // New: Optional text for shaping
+  persistTextShape?: boolean; // New: Whether to keep text shape static
 
   // Smoke
   isSmokeEnabled: boolean;
@@ -38,4 +39,3 @@ export interface SimulationPreset {
   windDirectionX: number;
   windStrength: number;
 }
-```

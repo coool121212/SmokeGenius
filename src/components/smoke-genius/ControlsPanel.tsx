@@ -34,8 +34,7 @@ import {
   Wind, // Wind
   ChevronsUp, // Buoyancy
   LocateFixed, // Particle Source (Center)
-  MousePointerSquare, // Particle Source (Mouse) -> Replaced with MousePointer2
-  MousePointer2, // Correct icon
+  MousePointer2, // Correct icon for mouse source
   ArrowDownToLine, // Particle Source (Bottom)
   Layers2, // Dissipation / Opacity
   Gauge, // Speed
@@ -43,6 +42,7 @@ import {
   Users, // Count/Density
   Waves, // Turbulence
   Type, // Text input icon
+  Pin, // Persist Text icon
   Info // Tooltip icon
 } from "lucide-react";
 
@@ -119,6 +119,8 @@ interface ControlsPanelProps {
   setSmokeBuoyancy: Dispatch<SetStateAction<number>>;
   particleText: string; // New prop for text shaping
   setParticleText: Dispatch<SetStateAction<string>>; // New prop setter
+  persistTextShape: boolean; // New state for persisting text shape
+  setPersistTextShape: Dispatch<SetStateAction<boolean>>; // Setter for persist state
 
   // Fire Props
   isFireEnabled: boolean;
@@ -180,6 +182,7 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
   smokeDissipation, setSmokeDissipation,
   smokeBuoyancy, setSmokeBuoyancy,
   particleText, setParticleText, // Destructure new props
+  persistTextShape, setPersistTextShape, // Destructure persist props
 
   // Fire Props
   isFireEnabled, setIsFireEnabled,
@@ -237,8 +240,9 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
               const selectedPreset = presets.find(p => p.name === value);
               if (selectedPreset) {
                 onApplyPreset(selectedPreset);
-                // Also apply preset text if it exists, otherwise clear text
+                // Apply preset text & persist setting
                 setParticleText(selectedPreset.particleText || '');
+                setPersistTextShape(selectedPreset.persistTextShape ?? false);
               }
             }}>
               <SelectTrigger id="presetSelect" aria-label="Select preset">
@@ -415,6 +419,27 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                         </TooltipContent>
                     </Tooltip>
 
+                     {/* Persist Text Shape Switch */}
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="flex items-center justify-between mt-2">
+                                <Label htmlFor="persistTextShapeSmoke" className="text-sm font-medium flex items-center">
+                                    <Pin className="mr-1.5 h-3.5 w-3.5" />
+                                    Persist Text Shape
+                                </Label>
+                                <Switch
+                                    id="persistTextShapeSmoke"
+                                    checked={persistTextShape}
+                                    onCheckedChange={setPersistTextShape}
+                                    disabled={!particleText} // Disable if no text is entered
+                                />
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center">
+                            <p>Keep particles in the text shape indefinitely. Requires text to be entered.</p>
+                        </TooltipContent>
+                    </Tooltip>
+
                 </div>
               )}
             </TabsContent>
@@ -522,6 +547,27 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                         </TooltipTrigger>
                         <TooltipContent side="top" align="center">
                             <p>Make particles form the shape of this text. Clears the 'Particle Source' setting.</p>
+                        </TooltipContent>
+                    </Tooltip>
+
+                     {/* Persist Text Shape Switch (Shared state) */}
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="flex items-center justify-between mt-2">
+                                <Label htmlFor="persistTextShapeFire" className="text-sm font-medium flex items-center">
+                                    <Pin className="mr-1.5 h-3.5 w-3.5" />
+                                    Persist Text Shape
+                                </Label>
+                                <Switch
+                                    id="persistTextShapeFire"
+                                    checked={persistTextShape}
+                                    onCheckedChange={setPersistTextShape}
+                                    disabled={!particleText}
+                                />
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center">
+                             <p>Keep particles in the text shape indefinitely. Requires text to be entered.</p>
                         </TooltipContent>
                     </Tooltip>
                 </div>
