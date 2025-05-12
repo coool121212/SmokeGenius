@@ -1,6 +1,7 @@
 
 "use client";
 
+import React from 'react';
 import type { Dispatch, SetStateAction, MutableRefObject } from 'react';
 import type { SimulationPreset, BlendMode, ParticleSource } from './types';
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   CircleDot, 
   StopCircle, 
@@ -28,21 +30,21 @@ import {
   Video, 
   Cloud, 
   Flame, 
-  ArrowDownToLine,
+  ArrowDownToLine, 
   MousePointer2, 
-  Target,
+  LocateFixed, 
   Wind,
   CloudOff, 
   ChevronsUp,
-  Palette, // For Base Color & Background Color
-  Paintbrush, // For Accent Color
-  Layers, // Opacity
-  Maximize, // Size/Spread
-  Gauge, // Speed
-  Users, // Count/Density
-  Waves, // Turbulence
-  Blend, // Blend Mode
-  Sparkles, // For Presets
+  Palette, 
+  Paintbrush, 
+  Layers, 
+  Maximize, 
+  Gauge, 
+  Users, 
+  Waves, 
+  Blend, 
+  Wand2, 
 } from "lucide-react";
 
 interface ControlsPanelProps {
@@ -146,7 +148,7 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
   presets, onApplyPreset
 }) => {
   const particleSourceOptions: { value: ParticleSource; label: string; icon: React.ElementType }[] = [
-    { value: "Center", label: "Center", icon: Target },
+    { value: "Center", label: "Center", icon: LocateFixed },
     { value: "Mouse", label: "Mouse", icon: MousePointer2 },
     { value: "Bottom", label: "Bottom", icon: ArrowDownToLine },
   ];
@@ -157,6 +159,15 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
     { value: "Subtractive", label: "Subtractive (Darker)"},
     { value: "Multiply", label: "Multiply (Intense/Shadow)"},
   ];
+
+  const renderTooltip = (content: string, children: React.ReactNode) => (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipContent><p>{content}</p></TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 
   return (
     <Card className="fixed bottom-0 left-0 right-0 m-2 md:m-4 shadow-2xl border-border bg-card/95 backdrop-blur-sm z-50 max-w-5xl mx-auto">
@@ -176,7 +187,9 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 mb-6">
               <div>
-                <Label className="font-semibold text-sm mb-1 block flex items-center"><Sparkles className="w-4 h-4 mr-1.5 text-primary/80"/>Simulation Preset</Label>
+                {renderTooltip("Load pre-configured settings for different visual effects.",
+                  <Label className="font-semibold text-sm mb-1 block flex items-center"><Wand2 className="w-4 h-4 mr-1.5 text-primary/80"/>Simulation Preset</Label>
+                )}
                 <Select onValueChange={(value) => {
                   const selectedPreset = presets.find(p => p.name === value);
                   if (selectedPreset) onApplyPreset(selectedPreset);
@@ -196,7 +209,9 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                 </Select>
               </div>
               <div>
-                <Label htmlFor="backgroundColor" className="font-semibold text-sm mb-1 block flex items-center"><Palette className="w-4 h-4 mr-1.5 text-primary/80"/>Background Color</Label>
+                {renderTooltip("Changes the background color of the simulation canvas.",
+                  <Label htmlFor="backgroundColor" className="font-semibold text-sm mb-1 block flex items-center"><Palette className="w-4 h-4 mr-1.5 text-primary/80"/>Background Color</Label>
+                )}
                  <div className="flex items-center gap-2">
                     <Input 
                         id="backgroundColor" 
@@ -211,16 +226,20 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
               </div>
               <div className="lg:col-span-1 grid grid-cols-2 gap-x-4">
                 <div>
-                  <Label htmlFor="windDirectionX" className="font-semibold text-sm mb-1 block flex items-center">
-                    <Wind className="w-4 h-4 mr-1.5 text-primary/80"/> Wind Dir.
-                  </Label>
+                  {renderTooltip("Controls the horizontal direction of the wind. Negative values for left, positive for right.",
+                    <Label htmlFor="windDirectionX" className="font-semibold text-sm mb-1 block flex items-center">
+                      <Wind className="w-4 h-4 mr-1.5 text-primary/80"/> Wind Dir.
+                    </Label>
+                  )}
                   <Slider id="windDirectionX" min={-1} max={1} step={0.01} value={[windDirectionX]} onValueChange={(v) => setWindDirectionX(v[0])} aria-label="Wind Direction (Horizontal)"/>
                   <span className="text-xs text-muted-foreground text-center block mt-1">{windDirectionX.toFixed(2)}</span>
                 </div>
                 <div>
-                  <Label htmlFor="windStrength" className="font-semibold text-sm mb-1 block flex items-center">
+                  {renderTooltip("Controls the strength of the wind effect.",
+                    <Label htmlFor="windStrength" className="font-semibold text-sm mb-1 block flex items-center">
                      <Wind className="w-4 h-4 mr-1.5 text-primary/80"/> Wind Str.
-                  </Label>
+                    </Label>
+                  )}
                   <Slider id="windStrength" min={0} max={0.05} step={0.001} value={[windStrength]} onValueChange={(v) => setWindStrength(v[0])} aria-label="Wind Strength"/>
                   <span className="text-xs text-muted-foreground text-center block mt-1">{windStrength.toFixed(3)}</span>
                 </div>
@@ -247,26 +266,34 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                       <h4 className="text-sm font-medium text-muted-foreground mb-2">Visual Properties</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
                         <div className="lg:col-span-2">
-                          <Label htmlFor="smokeBaseColor" className="font-semibold text-sm mb-1 block flex items-center"><Palette className="w-4 h-4 mr-1.5 text-primary/80"/>Base Color</Label>
+                          {renderTooltip("Main color of smoke particles.",
+                            <Label htmlFor="smokeBaseColor" className="font-semibold text-sm mb-1 block flex items-center"><Palette className="w-4 h-4 mr-1.5 text-primary/80"/>Base Color</Label>
+                          )}
                           <div className="flex items-center gap-2">
                             <Input id="smokeBaseColor" type="color" value={smokeBaseColor} onChange={(e) => setSmokeBaseColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Smoke particle base color" />
                             <span className="text-sm text-muted-foreground">{smokeBaseColor.toUpperCase()}</span>
                           </div>
                         </div>
                         <div className="lg:col-span-2">
-                          <Label htmlFor="smokeAccentColor" className="font-semibold text-sm mb-1 block flex items-center"><Paintbrush className="w-4 h-4 mr-1.5 text-primary/80"/>Accent Color</Label>
+                           {renderTooltip("Secondary color mixed into smoke for variation.",
+                            <Label htmlFor="smokeAccentColor" className="font-semibold text-sm mb-1 block flex items-center"><Paintbrush className="w-4 h-4 mr-1.5 text-primary/80"/>Accent Color</Label>
+                           )}
                           <div className="flex items-center gap-2">
                             <Input id="smokeAccentColor" type="color" value={smokeAccentColor} onChange={(e) => setSmokeAccentColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Smoke particle accent color" />
                             <span className="text-sm text-muted-foreground">{smokeAccentColor.toUpperCase()}</span>
                           </div>
                         </div>
                         <div>
-                          <Label htmlFor="smokeOpacity" className="font-semibold text-sm mb-1 block flex items-center"><Layers className="w-4 h-4 mr-1.5 text-primary/80"/>Opacity</Label>
+                          {renderTooltip("How transparent the smoke is. 0 is fully transparent, 1 is fully opaque.",
+                            <Label htmlFor="smokeOpacity" className="font-semibold text-sm mb-1 block flex items-center"><Layers className="w-4 h-4 mr-1.5 text-primary/80"/>Opacity</Label>
+                          )}
                           <Slider id="smokeOpacity" min={0} max={1} step={0.01} value={[smokeOpacity]} onValueChange={(v) => setSmokeOpacity(v[0])} aria-label="Smoke particle opacity"/>
                           <span className="text-xs text-muted-foreground text-center block mt-1">{smokeOpacity.toFixed(2)}</span>
                         </div>
                         <div>
-                          <Label htmlFor="smokeParticleSize" className="font-semibold text-sm mb-1 block flex items-center"><Maximize className="w-4 h-4 mr-1.5 text-primary/80"/>Size</Label>
+                          {renderTooltip("Overall size and spread of smoke particles.",
+                            <Label htmlFor="smokeParticleSize" className="font-semibold text-sm mb-1 block flex items-center"><Maximize className="w-4 h-4 mr-1.5 text-primary/80"/>Size</Label>
+                          )}
                           <Slider id="smokeParticleSize" min={0.5} max={5} step={0.1} value={[smokeSpread]} onValueChange={(v) => setSmokeSpread(v[0])} aria-label="Smoke particle size (spread)" />
                           <span className="text-xs text-muted-foreground text-center block mt-1">{smokeSpread.toFixed(1)}</span>
                         </div>
@@ -278,17 +305,23 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                         <h4 className="text-sm font-medium text-muted-foreground mb-2">Behavior Properties</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
                             <div>
-                                <Label htmlFor="smokeSpeed" className="font-semibold text-sm mb-1 block flex items-center"><Gauge className="w-4 h-4 mr-1.5 text-primary/80"/>Speed</Label>
+                                {renderTooltip("How fast smoke particles move, primarily upwards.",
+                                  <Label htmlFor="smokeSpeed" className="font-semibold text-sm mb-1 block flex items-center"><Gauge className="w-4 h-4 mr-1.5 text-primary/80"/>Speed</Label>
+                                )}
                                 <Slider id="smokeSpeed" min={0.005} max={0.1} step={0.005} value={[smokeSpeed]} onValueChange={(v) => setSmokeSpeed(v[0])} aria-label="Smoke particle speed" />
                                 <span className="text-xs text-muted-foreground text-center block mt-1">{smokeSpeed.toFixed(3)}</span>
                             </div>
                             <div>
-                                <Label htmlFor="smokeParticleCount" className="font-semibold text-sm mb-1 block flex items-center"><Users className="w-4 h-4 mr-1.5 text-primary/80"/>Count</Label>
+                                {renderTooltip("Number of smoke particles generated. Higher values mean denser smoke.",
+                                  <Label htmlFor="smokeParticleCount" className="font-semibold text-sm mb-1 block flex items-center"><Users className="w-4 h-4 mr-1.5 text-primary/80"/>Count</Label>
+                                )}
                                 <Slider id="smokeParticleCount" min={100} max={8000} step={100} value={[smokeDensity]} onValueChange={(v) => setSmokeDensity(v[0])} aria-label="Smoke particle count (density)"/>
                                 <span className="text-xs text-muted-foreground text-center block mt-1">{smokeDensity}</span>
                             </div>
                             <div>
-                                <Label htmlFor="smokeTurbulence" className="font-semibold text-sm mb-1 block flex items-center"><Waves className="w-4 h-4 mr-1.5 text-primary/80"/>Turbulence</Label>
+                                {renderTooltip("Amount of chaotic, swirling motion in the smoke.",
+                                  <Label htmlFor="smokeTurbulence" className="font-semibold text-sm mb-1 block flex items-center"><Waves className="w-4 h-4 mr-1.5 text-primary/80"/>Turbulence</Label>
+                                )}
                                 <Slider id="smokeTurbulence" min={0} max={5} step={0.1} value={[smokeTurbulence]} onValueChange={(v) => setSmokeTurbulence(v[0])} aria-label="Smoke turbulence"/>
                                 <span className="text-xs text-muted-foreground text-center block mt-1">{smokeTurbulence.toFixed(1)}</span>
                             </div>
@@ -300,17 +333,23 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                         <h4 className="text-sm font-medium text-muted-foreground mb-2">Physics & Rendering</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
                             <div>
-                                <Label htmlFor="smokeDissipation" className="font-semibold text-sm mb-1 block flex items-center"><CloudOff className="w-4 h-4 mr-1.5 text-primary/80"/> Dissipation</Label>
+                                {renderTooltip("Rate at which smoke fades away over time.",
+                                  <Label htmlFor="smokeDissipation" className="font-semibold text-sm mb-1 block flex items-center"><CloudOff className="w-4 h-4 mr-1.5 text-primary/80"/> Dissipation</Label>
+                                )}
                                 <Slider id="smokeDissipation" min={0} max={1} step={0.01} value={[smokeDissipation]} onValueChange={(v) => setSmokeDissipation(v[0])} aria-label="Smoke dissipation rate"/>
                                 <span className="text-xs text-muted-foreground text-center block mt-1">{smokeDissipation.toFixed(2)}</span>
                             </div>
                             <div>
-                                <Label htmlFor="smokeBuoyancy" className="font-semibold text-sm mb-1 block flex items-center"><ChevronsUp className="w-4 h-4 mr-1.5 text-primary/80"/> Buoyancy</Label>
+                                {renderTooltip("Upward force acting on smoke particles, simulating heat rise.",
+                                  <Label htmlFor="smokeBuoyancy" className="font-semibold text-sm mb-1 block flex items-center"><ChevronsUp className="w-4 h-4 mr-1.5 text-primary/80"/> Buoyancy</Label>
+                                )}
                                 <Slider id="smokeBuoyancy" min={0} max={0.05} step={0.001} value={[smokeBuoyancy]} onValueChange={(v) => setSmokeBuoyancy(v[0])} aria-label="Smoke buoyancy force"/>
                                 <span className="text-xs text-muted-foreground text-center block mt-1">{smokeBuoyancy.toFixed(3)}</span>
                             </div>
                             <div>
-                                <Label className="font-semibold text-sm mb-1 block flex items-center"><Blend className="w-4 h-4 mr-1.5 text-primary/80"/>Blend Mode</Label>
+                                {renderTooltip("Determines how smoke color interacts with the colors behind it.",
+                                  <Label className="font-semibold text-sm mb-1 block flex items-center"><Blend className="w-4 h-4 mr-1.5 text-primary/80"/>Blend Mode</Label>
+                                )}
                                 <Select value={smokeBlendMode} onValueChange={(value: BlendMode) => setSmokeBlendMode(value)}>
                                 <SelectTrigger aria-label="Smoke blend mode"><SelectValue /></SelectTrigger>
                                 <SelectContent>
@@ -319,7 +358,9 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                                 </Select>
                             </div>
                             <div>
-                                <Label className="font-semibold text-sm mb-1 block flex items-center"><Target className="w-4 h-4 mr-1.5 text-primary/80"/>Particle Source</Label>
+                                {renderTooltip("Where new smoke particles originate from in the scene.",
+                                  <Label className="font-semibold text-sm mb-1 block flex items-center"><particleSourceOptions.find(opt => opt.value === smokeSource)?.icon className="w-4 h-4 mr-1.5 text-primary/80" default={LocateFixed}/>Particle Source</Label>
+                                )}
                                 <Select value={smokeSource} onValueChange={(value: ParticleSource) => setSmokeSource(value)}>
                                 <SelectTrigger aria-label="Smoke particle source"><SelectValue /></SelectTrigger>
                                 <SelectContent>
@@ -346,26 +387,34 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                         <h4 className="text-sm font-medium text-muted-foreground mb-2">Visual Properties</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
                             <div className="lg:col-span-2">
-                                <Label htmlFor="fireBaseColor" className="font-semibold text-sm mb-1 block flex items-center"><Palette className="w-4 h-4 mr-1.5 text-primary/80"/>Base Color</Label>
+                                {renderTooltip("Main color of fire particles.",
+                                  <Label htmlFor="fireBaseColor" className="font-semibold text-sm mb-1 block flex items-center"><Palette className="w-4 h-4 mr-1.5 text-primary/80"/>Base Color</Label>
+                                )}
                                 <div className="flex items-center gap-2">
                                     <Input id="fireBaseColor" type="color" value={fireBaseColor} onChange={(e) => setFireBaseColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Fire particle base color" />
                                     <span className="text-sm text-muted-foreground">{fireBaseColor.toUpperCase()}</span>
                                 </div>
                             </div>
                             <div className="lg:col-span-2">
-                                <Label htmlFor="fireAccentColor" className="font-semibold text-sm mb-1 block flex items-center"><Paintbrush className="w-4 h-4 mr-1.5 text-primary/80"/>Accent Color</Label>
+                                {renderTooltip("Secondary color for fire variation (e.g., embers, hotter core).",
+                                  <Label htmlFor="fireAccentColor" className="font-semibold text-sm mb-1 block flex items-center"><Paintbrush className="w-4 h-4 mr-1.5 text-primary/80"/>Accent Color</Label>
+                                )}
                                 <div className="flex items-center gap-2">
                                     <Input id="fireAccentColor" type="color" value={fireAccentColor} onChange={(e) => setFireAccentColor(e.target.value)} className="w-10 h-10 p-1 cursor-pointer" aria-label="Fire particle accent color" />
                                     <span className="text-sm text-muted-foreground">{fireAccentColor.toUpperCase()}</span>
                                 </div>
                             </div>
                             <div>
-                                <Label htmlFor="fireOpacity" className="font-semibold text-sm mb-1 block flex items-center"><Layers className="w-4 h-4 mr-1.5 text-primary/80"/>Opacity</Label>
+                                {renderTooltip("How transparent the fire is. 0 is fully transparent, 1 is fully opaque.",
+                                  <Label htmlFor="fireOpacity" className="font-semibold text-sm mb-1 block flex items-center"><Layers className="w-4 h-4 mr-1.5 text-primary/80"/>Opacity</Label>
+                                )}
                                 <Slider id="fireOpacity" min={0} max={1} step={0.01} value={[fireOpacity]} onValueChange={(v) => setFireOpacity(v[0])} aria-label="Fire particle opacity"/>
                                 <span className="text-xs text-muted-foreground text-center block mt-1">{fireOpacity.toFixed(2)}</span>
                             </div>
                             <div>
-                                <Label htmlFor="fireParticleSize" className="font-semibold text-sm mb-1 block flex items-center"><Maximize className="w-4 h-4 mr-1.5 text-primary/80"/>Size</Label>
+                                {renderTooltip("Overall size and spread of fire particles.",
+                                  <Label htmlFor="fireParticleSize" className="font-semibold text-sm mb-1 block flex items-center"><Maximize className="w-4 h-4 mr-1.5 text-primary/80"/>Size</Label>
+                                )}
                                 <Slider id="fireParticleSize" min={0.2} max={3} step={0.1} value={[fireSpread]} onValueChange={(v) => setFireSpread(v[0])} aria-label="Fire particle size (spread)" />
                                 <span className="text-xs text-muted-foreground text-center block mt-1">{fireSpread.toFixed(1)}</span>
                             </div>
@@ -377,17 +426,23 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                         <h4 className="text-sm font-medium text-muted-foreground mb-2">Behavior Properties</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
                             <div>
-                                <Label htmlFor="fireSpeed" className="font-semibold text-sm mb-1 block flex items-center"><Gauge className="w-4 h-4 mr-1.5 text-primary/80"/>Speed</Label>
+                                {renderTooltip("How fast fire particles move, primarily upwards.",
+                                  <Label htmlFor="fireSpeed" className="font-semibold text-sm mb-1 block flex items-center"><Gauge className="w-4 h-4 mr-1.5 text-primary/80"/>Speed</Label>
+                                )}
                                 <Slider id="fireSpeed" min={0.01} max={0.2} step={0.005} value={[fireSpeed]} onValueChange={(v) => setFireSpeed(v[0])} aria-label="Fire particle speed" />
                                 <span className="text-xs text-muted-foreground text-center block mt-1">{fireSpeed.toFixed(3)}</span>
                             </div>
                             <div>
-                                <Label htmlFor="fireParticleCount" className="font-semibold text-sm mb-1 block flex items-center"><Users className="w-4 h-4 mr-1.5 text-primary/80"/>Count</Label>
+                                {renderTooltip("Intensity/number of fire particles. Higher values mean more intense fire.",
+                                  <Label htmlFor="fireParticleCount" className="font-semibold text-sm mb-1 block flex items-center"><Users className="w-4 h-4 mr-1.5 text-primary/80"/>Count</Label>
+                                )}
                                 <Slider id="fireParticleCount" min={100} max={5000} step={50} value={[fireDensity]} onValueChange={(v) => setFireDensity(v[0])} aria-label="Fire particle count (intensity)"/>
                                 <span className="text-xs text-muted-foreground text-center block mt-1">{fireDensity}</span>
                             </div>
                             <div>
-                                <Label htmlFor="fireTurbulence" className="font-semibold text-sm mb-1 block flex items-center"><Waves className="w-4 h-4 mr-1.5 text-primary/80"/>Turbulence</Label>
+                                {renderTooltip("Amount of flickering and chaotic motion in the fire.",
+                                  <Label htmlFor="fireTurbulence" className="font-semibold text-sm mb-1 block flex items-center"><Waves className="w-4 h-4 mr-1.5 text-primary/80"/>Turbulence</Label>
+                                )}
                                 <Slider id="fireTurbulence" min={0} max={5} step={0.1} value={[fireTurbulence]} onValueChange={(v) => setFireTurbulence(v[0])} aria-label="Fire turbulence"/>
                                 <span className="text-xs text-muted-foreground text-center block mt-1">{fireTurbulence.toFixed(1)}</span>
                             </div>
@@ -399,7 +454,9 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                          <h4 className="text-sm font-medium text-muted-foreground mb-2">Source & Rendering</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
                             <div>
-                                <Label className="font-semibold text-sm mb-1 block flex items-center"><Blend className="w-4 h-4 mr-1.5 text-primary/80"/>Blend Mode</Label>
+                                {renderTooltip("Determines how fire color interacts with the colors behind it.",
+                                  <Label className="font-semibold text-sm mb-1 block flex items-center"><Blend className="w-4 h-4 mr-1.5 text-primary/80"/>Blend Mode</Label>
+                                )}
                                 <Select value={fireBlendMode} onValueChange={(value: BlendMode) => setFireBlendMode(value)}>
                                 <SelectTrigger aria-label="Fire blend mode"><SelectValue /></SelectTrigger>
                                 <SelectContent>
@@ -408,7 +465,9 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                                 </Select>
                             </div>
                             <div>
-                                <Label className="font-semibold text-sm mb-1 block flex items-center"><Target className="w-4 h-4 mr-1.5 text-primary/80"/>Particle Source</Label>
+                                {renderTooltip("Where new fire particles originate from in the scene.",
+                                  <Label className="font-semibold text-sm mb-1 block flex items-center"><particleSourceOptions.find(opt => opt.value === fireParticleSource)?.icon className="w-4 h-4 mr-1.5 text-primary/80" default={LocateFixed}/>Particle Source</Label>
+                                )}
                                 <Select value={fireParticleSource} onValueChange={(value: ParticleSource) => setFireParticleSource(value)}>
                                 <SelectTrigger aria-label="Fire particle source"><SelectValue /></SelectTrigger>
                                 <SelectContent>
@@ -424,33 +483,41 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
 
               <TabsContent value="media">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 items-end">
-                  <Button onClick={() => setIsPlaying(!isPlaying)} variant="outline" className="w-full">
-                    {isPlaying ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
-                    {isPlaying ? 'Pause Simulation' : 'Play Simulation'}
-                  </Button>
+                  {renderTooltip("Toggle simulation playback.",
+                    <Button onClick={() => setIsPlaying(!isPlaying)} variant="outline" className="w-full">
+                      {isPlaying ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
+                      {isPlaying ? 'Pause Simulation' : 'Play Simulation'}
+                    </Button>
+                  )}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                         <Video className="w-5 h-5 text-primary" /> Recording
                     </div>
                     {!isRecording ? (
-                      <Button onClick={onStartRecording} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                        <CircleDot className="mr-2 h-4 w-4" /> Start Recording
-                      </Button>
+                       renderTooltip("Start capturing the simulation as a video.",
+                        <Button onClick={onStartRecording} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+                          <CircleDot className="mr-2 h-4 w-4" /> Start Recording
+                        </Button>
+                       )
                     ) : (
-                      <Button onClick={onStopRecording} variant="destructive" className="w-full">
-                        <StopCircle className="mr-2 h-4 w-4" /> Stop Recording
-                      </Button>
+                      renderTooltip("Stop the current video recording.",
+                        <Button onClick={onStopRecording} variant="destructive" className="w-full">
+                          <StopCircle className="mr-2 h-4 w-4" /> Stop Recording
+                        </Button>
+                      )
                     )}
                     {recordedVideoUrl && (
-                      <Button 
-                        onClick={onDownloadRecording} 
-                        variant="outline" 
-                        className="w-full"
-                        disabled={!mediaRecorderRef.current}
-                      >
-                        <Download className="mr-2 h-4 w-4" /> 
-                        Download {mediaRecorderRef.current?.mimeType.includes('mp4') ? 'MP4' : 'WebM'}
-                      </Button>
+                      renderTooltip("Download the recorded video.",
+                        <Button 
+                          onClick={onDownloadRecording} 
+                          variant="outline" 
+                          className="w-full"
+                          disabled={!mediaRecorderRef.current}
+                        >
+                          <Download className="mr-2 h-4 w-4" /> 
+                          Download {mediaRecorderRef.current?.mimeType.includes('mp4') ? 'MP4' : 'WebM'}
+                        </Button>
+                      )
                     )}
                   </div>
                 </div>
@@ -466,3 +533,4 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
 
 export default ControlsPanel;
 
+    
