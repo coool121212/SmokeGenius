@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { Dispatch, SetStateAction, MutableRefObject } from 'react';
@@ -31,8 +30,8 @@ import {
   MousePointer2, 
   Target,
   Wind,
-  CloudOff, // Icon for Dissipation
-  ChevronsUp, // Icon for Buoyancy
+  CloudOff, 
+  ChevronsUp, 
 } from "lucide-react";
 
 interface ControlsPanelProps {
@@ -266,22 +265,27 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                     <div>
                       <Label htmlFor="smokeOpacity" className="font-semibold text-sm mb-1 block">Particle Opacity</Label>
                       <Slider id="smokeOpacity" min={0} max={1} step={0.01} value={[smokeOpacity]} onValueChange={(v) => setSmokeOpacity(v[0])} aria-label="Smoke particle opacity"/>
+                      <span className="text-xs text-muted-foreground text-center block mt-1">{smokeOpacity.toFixed(2)}</span>
                     </div>
                     <div>
                       <Label htmlFor="smokeSpeed" className="font-semibold text-sm mb-1 block">Particle Speed</Label>
                       <Slider id="smokeSpeed" min={0.005} max={0.1} step={0.005} value={[smokeSpeed]} onValueChange={(v) => setSmokeSpeed(v[0])} aria-label="Smoke particle speed" />
+                      <span className="text-xs text-muted-foreground text-center block mt-1">{smokeSpeed.toFixed(3)}</span>
                     </div>
                      <div>
                       <Label htmlFor="smokeParticleSize" className="font-semibold text-sm mb-1 block">Particle Size</Label>
                       <Slider id="smokeParticleSize" min={0.5} max={5} step={0.1} value={[smokeSpread]} onValueChange={(v) => setSmokeSpread(v[0])} aria-label="Smoke particle size (spread)" />
+                      <span className="text-xs text-muted-foreground text-center block mt-1">{smokeSpread.toFixed(1)}</span>
                     </div>
                     <div>
                       <Label htmlFor="smokeParticleCount" className="font-semibold text-sm mb-1 block">Particle Count</Label>
                       <Slider id="smokeParticleCount" min={100} max={8000} step={100} value={[smokeDensity]} onValueChange={(v) => setSmokeDensity(v[0])} aria-label="Smoke particle count (density)"/>
+                      <span className="text-xs text-muted-foreground text-center block mt-1">{smokeDensity}</span>
                     </div>
                     <div>
                       <Label htmlFor="smokeTurbulence" className="font-semibold text-sm mb-1 block">Turbulence</Label>
                       <Slider id="smokeTurbulence" min={0} max={5} step={0.1} value={[smokeTurbulence]} onValueChange={(v) => setSmokeTurbulence(v[0])} aria-label="Smoke turbulence"/>
+                      <span className="text-xs text-muted-foreground text-center block mt-1">{smokeTurbulence.toFixed(1)}</span>
                     </div>
                      <div>
                       <Label htmlFor="smokeDissipation" className="font-semibold text-sm mb-1 block flex items-center">
@@ -361,22 +365,27 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                     <div>
                       <Label htmlFor="fireOpacity" className="font-semibold text-sm mb-1 block">Particle Opacity</Label>
                       <Slider id="fireOpacity" min={0} max={1} step={0.01} value={[fireOpacity]} onValueChange={(v) => setFireOpacity(v[0])} aria-label="Fire particle opacity"/>
+                      <span className="text-xs text-muted-foreground text-center block mt-1">{fireOpacity.toFixed(2)}</span>
                     </div>
                     <div>
                       <Label htmlFor="fireSpeed" className="font-semibold text-sm mb-1 block">Particle Speed</Label>
                       <Slider id="fireSpeed" min={0.01} max={0.2} step={0.005} value={[fireSpeed]} onValueChange={(v) => setFireSpeed(v[0])} aria-label="Fire particle speed" />
+                      <span className="text-xs text-muted-foreground text-center block mt-1">{fireSpeed.toFixed(3)}</span>
                     </div>
                      <div>
                       <Label htmlFor="fireParticleSize" className="font-semibold text-sm mb-1 block">Particle Size</Label>
                       <Slider id="fireParticleSize" min={0.2} max={3} step={0.1} value={[fireSpread]} onValueChange={(v) => setFireSpread(v[0])} aria-label="Fire particle size (spread)" />
+                      <span className="text-xs text-muted-foreground text-center block mt-1">{fireSpread.toFixed(1)}</span>
                     </div>
                     <div>
                       <Label htmlFor="fireParticleCount" className="font-semibold text-sm mb-1 block">Particle Count</Label>
                       <Slider id="fireParticleCount" min={100} max={5000} step={50} value={[fireDensity]} onValueChange={(v) => setFireDensity(v[0])} aria-label="Fire particle count (intensity)"/>
+                      <span className="text-xs text-muted-foreground text-center block mt-1">{fireDensity}</span>
                     </div>
                     <div>
                       <Label htmlFor="fireTurbulence" className="font-semibold text-sm mb-1 block">Turbulence</Label>
                       <Slider id="fireTurbulence" min={0} max={5} step={0.1} value={[fireTurbulence]} onValueChange={(v) => setFireTurbulence(v[0])} aria-label="Fire turbulence"/>
+                      <span className="text-xs text-muted-foreground text-center block mt-1">{fireTurbulence.toFixed(1)}</span>
                     </div>
                     <div>
                       <Label className="font-semibold text-sm mb-1 block">Blend Mode</Label>
@@ -443,4 +452,3 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
 };
 
 export default ControlsPanel;
-
