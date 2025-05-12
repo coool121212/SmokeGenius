@@ -47,28 +47,28 @@ const BASE_SMOKE_LIFESPAN = 220;
 
 const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   isSmokeEnabled = true,
-  smokeDensity = 3500, // Increased default smoke
+  smokeDensity = 3500,
   smokeBaseColor = '#FFFFFF',
   smokeAccentColor = '#E0E0E0',
-  smokeSpeed = 0.015, // Slower default smoke speed
-  smokeSpread = 3.5, // Increased default smoke spread
+  smokeSpeed = 0.015,
+  smokeSpread = 3.5,
   smokeBlendMode = "Normal",
   smokeSource = "Bottom",
-  smokeOpacity = 0.6, // Slightly reduced opacity for softness
-  smokeTurbulence = 1.2, // Moderate turbulence
+  smokeOpacity = 0.6,
+  smokeTurbulence = 1.2,
   smokeDissipation = 0.2, 
   smokeBuoyancy = 0.005, 
   
-  isFireEnabled = false, // Fire off by default
+  isFireEnabled = false,
   fireBaseColor = '#FFA500',
   fireAccentColor = '#FFD700',
-  fireDensity = 800, // Moderate fire density
+  fireDensity = 800,
   fireSpeed = 0.03,
   fireSpread = 1.5, 
   fireParticleSource = "Bottom",
   fireBlendMode = "Additive",
-  fireOpacity = 0.7, // Fire slightly more opaque
-  fireTurbulence = 1.0, // Fire turbulence
+  fireOpacity = 0.7,
+  fireTurbulence = 1.0,
 
   backgroundColor = '#000000',
   windDirectionX = 0,
@@ -93,7 +93,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   const actualFireParticleCount = Math.min(fireDensity, MAX_FIRE_PARTICLES);
 
   const mouseSceneXRef = useRef(0); 
-  const mouseSceneYRef = useRef(0); // Added for Y-coordinate tracking
+  const mouseSceneYRef = useRef(0);
 
   useEffect(() => {
     import('three').then(three => {
@@ -117,7 +117,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       const canvasBounds = mountRef.current.getBoundingClientRect();
       
       const mouseXNDC = ((event.clientX - canvasBounds.left) / canvasBounds.width) * 2 - 1;
-      const mouseYNDC = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1; // Calculate Y NDC
+      const mouseYNDC = -((event.clientY - canvasBounds.top) / canvasBounds.height) * 2 + 1;
       
       const vec = new THREE_Module.Vector3(mouseXNDC, mouseYNDC, 0.5); 
       vec.unproject(cameraRef.current);
@@ -125,7 +125,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       const distance = -cameraRef.current.position.z / dir.z;
       const pos = cameraRef.current.position.clone().add(dir.multiplyScalar(distance));
       mouseSceneXRef.current = pos.x;
-      mouseSceneYRef.current = pos.y; // Store scene Y
+      mouseSceneYRef.current = pos.y;
     };
 
     const currentMountRef = mountRef.current;
@@ -236,10 +236,10 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
           }
           break;
         case "Mouse":
-          const mouseSpreadFactor = isFireSystem ? 0.3 : 0.4; // Adjusted smoke spread for mouse
+          const mouseSpreadFactor = isFireSystem ? 0.3 : 0.4;
           positions[i3] = mouseSceneXRef.current + (Math.random() - 0.5) * spreadVal * mouseSpreadFactor;
           positions[i3 + 1] = mouseSceneYRef.current + (Math.random() - 0.5) * spreadVal * mouseSpreadFactor; 
-          positions[i3 + 2] = (Math.random() - 0.5) * spreadVal * mouseSpreadFactor * 0.5; // Less Z spread for mouse
+          positions[i3 + 2] = (Math.random() - 0.5) * spreadVal * mouseSpreadFactor * 0.5;
           break;
         case "Center":
         default:
@@ -278,7 +278,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
         alphas[i] = opacityVal * (0.7 + Math.random() * 0.3); 
         particleSizes[i] = (0.6 + Math.random() * 0.6) * (spreadVal / 1.1); 
         lives[i] = Math.random() * BASE_FIRE_LIFESPAN * 0.5 + BASE_FIRE_LIFESPAN * 0.5; 
-      } else { // Smoke
+      } else { 
         velocities[i3] = (Math.random() - 0.5) * 0.025 * spreadVal; 
         velocities[i3 + 1] = Math.random() * speedVal * 0.8 + speedVal * 0.2; 
         velocities[i3 + 2] = (Math.random() - 0.5) * 0.025 * spreadVal;
@@ -301,29 +301,35 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     geometry.setAttribute('alpha', new THREE_Module.BufferAttribute(alphas, 1));
     geometry.setAttribute('particleSize', new THREE_Module.BufferAttribute(particleSizes, 1)); 
     geometry.setAttribute('life', new THREE_Module.BufferAttribute(lives, 1));
-
-    let blendingMode = THREE_Module.NormalBlending;
-    if (currentBlendMode && THREE_Module) {
-        switch(currentBlendMode) {
-            case "Additive": blendingMode = THREE_Module.AdditiveBlending; break;
-            case "Subtractive": blendingMode = THREE_Module.SubtractiveBlending; break;
-            case "Multiply": blendingMode = THREE_Module.MultiplyBlending; break;
-            case "Normal":
-            default: blendingMode = isFireSystem ? THREE_Module.AdditiveBlending : THREE_Module.NormalBlending; break;
-        }
-    } else {
-      blendingMode = isFireSystem ? THREE_Module.AdditiveBlending : THREE_Module.NormalBlending;
-    }
-
-
+    
     const material = new THREE_Module.PointsMaterial({
       map: isFireSystem ? fireParticleTexture : smokeParticleTexture,
-      blending: blendingMode, 
       depthWrite: false,
       transparent: true,
       vertexColors: true, 
       sizeAttenuation: true,
     });
+
+    if (currentBlendMode === "Subtractive") {
+        material.blending = THREE_Module.CustomBlending;
+        material.blendEquation = THREE_Module.ReverseSubtractEquation;
+        material.blendSrc = THREE_Module.SrcAlphaFactor;
+        material.blendDst = THREE_Module.OneFactor;
+        material.blendSrcAlpha = THREE_Module.SrcAlphaFactor; // Or another suitable factor like OneFactor
+        material.blendDstAlpha = THREE_Module.OneFactor; // Or ZeroFactor / OneMinusSrcAlphaFactor
+        material.blendEquationAlpha = THREE_Module.AddEquation; // Often alpha is simply added or maxed
+    } else {
+        let blendingModeEnum = isFireSystem ? THREE_Module.AdditiveBlending : THREE_Module.NormalBlending;
+        if (currentBlendMode && THREE_Module) {
+            switch(currentBlendMode) {
+                case "Additive": blendingModeEnum = THREE_Module.AdditiveBlending; break;
+                case "Multiply": blendingModeEnum = THREE_Module.MultiplyBlending; break;
+                case "Normal":
+                default: blendingModeEnum = isFireSystem ? THREE_Module.AdditiveBlending : THREE_Module.NormalBlending; break;
+            }
+        }
+        material.blending = blendingModeEnum;
+    }
     
     material.onBeforeCompile = shader => {
         const pixelRatio = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
@@ -436,9 +442,9 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
                   newZ = (Math.random() - 0.5) * smokeSpread * 0.8;
                   break;
                 case "Mouse":
-                  newX = mouseSceneXRef.current + (Math.random() - 0.5) * smokeSpread * 0.4; // Adjusted spread
-                  newY = mouseSceneYRef.current + (Math.random() - 0.5) * smokeSpread * 0.4; // Use Y
-                  newZ = (Math.random() - 0.5) * smokeSpread * 0.4 * 0.5; // Less Z spread
+                  newX = mouseSceneXRef.current + (Math.random() - 0.5) * smokeSpread * 0.4;
+                  newY = mouseSceneYRef.current + (Math.random() - 0.5) * smokeSpread * 0.4;
+                  newZ = (Math.random() - 0.5) * smokeSpread * 0.4 * 0.5;
                   break;
                 case "Center":
                 default:
@@ -524,8 +530,8 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
                   break;
                 case "Mouse":
                   newX = mouseSceneXRef.current + (Math.random() - 0.5) * fireSpread * 0.3;
-                  newY = mouseSceneYRef.current + (Math.random() - 0.5) * fireSpread * 0.3; // Use Y
-                  newZ = (Math.random() - 0.5) * fireSpread * 0.3 * 0.5; // Less Z spread
+                  newY = mouseSceneYRef.current + (Math.random() - 0.5) * fireSpread * 0.3;
+                  newZ = (Math.random() - 0.5) * fireSpread * 0.3 * 0.5;
                   break;
                 case "Center":
                 default:
@@ -614,37 +620,57 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       backgroundColor, windDirectionX, windStrength,
       smokeBaseColor, smokeAccentColor, smokeSpeed, smokeSpread, smokeOpacity, smokeTurbulence, smokeSource, smokeBlendMode, isSmokeEnabled, smokeDissipation, smokeBuoyancy,
       fireBaseColor, fireAccentColor, fireSpeed, fireSpread, fireOpacity, fireTurbulence, fireParticleSource, fireBlendMode, isFireEnabled, 
-      isPlaying, smokeParticleTexture, fireParticleTexture // Added textures as deps
+      isPlaying, smokeParticleTexture, fireParticleTexture
     ]); 
 
 
   useEffect(() => {
     if (smokeParticlesRef.current && smokeParticlesRef.current.material && THREE_Module && isThreeLoaded) {
-      let newBlendingMode = THREE_Module.NormalBlending;
-       switch(smokeBlendMode) {
-            case "Additive": newBlendingMode = THREE_Module.AdditiveBlending; break;
-            case "Subtractive": newBlendingMode = THREE_Module.SubtractiveBlending; break;
-            case "Multiply": newBlendingMode = THREE_Module.MultiplyBlending; break;
-            case "Normal":
-            default: newBlendingMode = THREE_Module.NormalBlending; break;
-        }
-      (smokeParticlesRef.current.material as THREE.PointsMaterial).blending = newBlendingMode;
-      (smokeParticlesRef.current.material as THREE.PointsMaterial).needsUpdate = true;
+      const material = smokeParticlesRef.current.material as THREE.PointsMaterial;
+      if (smokeBlendMode === "Subtractive") {
+          material.blending = THREE_Module.CustomBlending;
+          material.blendEquation = THREE_Module.ReverseSubtractEquation;
+          material.blendSrc = THREE_Module.SrcAlphaFactor;
+          material.blendDst = THREE_Module.OneFactor;
+          material.blendSrcAlpha = THREE_Module.SrcAlphaFactor; 
+          material.blendDstAlpha = THREE_Module.OneFactor;
+          material.blendEquationAlpha = THREE_Module.AddEquation; // Alpha usually additive or max
+      } else {
+          let newBlendingMode = THREE_Module.NormalBlending;
+          switch(smokeBlendMode) {
+              case "Additive": newBlendingMode = THREE_Module.AdditiveBlending; break;
+              case "Multiply": newBlendingMode = THREE_Module.MultiplyBlending; break;
+              case "Normal":
+              default: newBlendingMode = THREE_Module.NormalBlending; break;
+          }
+          material.blending = newBlendingMode;
+      }
+      material.needsUpdate = true;
     }
   }, [smokeBlendMode, isThreeLoaded, THREE_Module]);
 
   useEffect(() => {
     if (fireParticlesRef.current && fireParticlesRef.current.material && THREE_Module && isThreeLoaded) {
-      let newBlendingMode = THREE_Module.AdditiveBlending; 
-      switch(fireBlendMode) {
-        case "Additive": newBlendingMode = THREE_Module.AdditiveBlending; break;
-        case "Subtractive": newBlendingMode = THREE_Module.SubtractiveBlending; break;
-        case "Multiply": newBlendingMode = THREE_Module.MultiplyBlending; break;
-        case "Normal": 
-        default: newBlendingMode = THREE_Module.AdditiveBlending; break; 
+      const material = fireParticlesRef.current.material as THREE.PointsMaterial;
+      if (fireBlendMode === "Subtractive") {
+          material.blending = THREE_Module.CustomBlending;
+          material.blendEquation = THREE_Module.ReverseSubtractEquation;
+          material.blendSrc = THREE_Module.SrcAlphaFactor;
+          material.blendDst = THREE_Module.OneFactor;
+          material.blendSrcAlpha = THREE_Module.SrcAlphaFactor;
+          material.blendDstAlpha = THREE_Module.OneFactor;
+          material.blendEquationAlpha = THREE_Module.AddEquation;
+      } else {
+          let newBlendingMode = THREE_Module.AdditiveBlending; 
+          switch(fireBlendMode) {
+            case "Additive": newBlendingMode = THREE_Module.AdditiveBlending; break;
+            case "Multiply": newBlendingMode = THREE_Module.MultiplyBlending; break;
+            case "Normal": 
+            default: newBlendingMode = THREE_Module.AdditiveBlending; break; 
+          }
+          material.blending = newBlendingMode;
       }
-      (fireParticlesRef.current.material as THREE.PointsMaterial).blending = newBlendingMode;
-      (fireParticlesRef.current.material as THREE.PointsMaterial).needsUpdate = true;
+      material.needsUpdate = true;
     }
   }, [fireBlendMode, isThreeLoaded, THREE_Module]);
 
@@ -691,3 +717,5 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
 };
 
 export default SmokeCanvas;
+
+      
