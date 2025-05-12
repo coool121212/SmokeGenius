@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
@@ -45,7 +44,7 @@ const MAX_FIRE_PARTICLES = 5000;
 
 const BASE_FIRE_LIFESPAN = 70; 
 const BASE_SMOKE_LIFESPAN = 220;
-const BOTTOM_SOURCE_X_SPREAD = 12.0; // Defines the width for bottom particle emission
+const BOTTOM_SOURCE_X_SPREAD = 12.0; 
 
 const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   isSmokeEnabled = true,
@@ -64,7 +63,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   isFireEnabled = false,
   fireBaseColor = '#FFA500',
   fireAccentColor = '#FFD700',
-  fireDensity = 800,
+  fireDensity = 800, // Default to a visible amount if enabled
   fireSpeed = 0.03,
   fireSpread = 1.5, 
   fireParticleSource = "Bottom",
@@ -120,8 +119,8 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
 
     const handleMouseMove = (event: MouseEvent) => {
       if (!mountRef.current || !cameraRef.current || !THREE_Module) return;
-      if (smokeSource !== "Mouse" && fireParticleSource !== "Mouse" && !isSmokeEnabled && !isFireEnabled) return;
-
+      // Removed condition: (smokeSource !== "Mouse" && fireParticleSource !== "Mouse" && !isSmokeEnabled && !isFireEnabled)
+      // Allow mouse tracking even if particles are not currently set to mouse source, in case user switches.
 
       const canvasBounds = mountRef.current.getBoundingClientRect();
       
@@ -142,7 +141,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     return () => {
       currentMountRef.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [isThreeLoaded, smokeSource, fireParticleSource, isSmokeEnabled, isFireEnabled, THREE_Module]);
+  }, [isThreeLoaded, THREE_Module]);
 
 
   const smokeParticleTexture = useMemo(() => {
@@ -212,8 +211,8 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     opacityVal: number,
     currentParticleSource?: ParticleSource,
     currentBlendMode?: BlendMode
-  ) => {
-    if (!THREE_Module) return { geometry: null, material: null };
+  ): { geometry: THREE.BufferGeometry | null; material: THREE.PointsMaterial | null } => {
+    if (!THREE_Module || count === 0) return { geometry: null, material: null };
 
     const geometry = new THREE_Module.BufferGeometry();
     const positions = new Float32Array(count * 3);
@@ -376,42 +375,59 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   useEffect(() => {
     if (!mountRef.current || !isThreeLoaded || !THREE_Module || !smokeParticleTexture || !fireParticleTexture) return;
 
-    const scene = new THREE_Module.Scene();
+    const scene = sceneRef.current || new THREE_Module.Scene();
     sceneRef.current = scene;
     
-    const camera = new THREE_Module.PerspectiveCamera(75, mountRef.current.clientWidth / mountRef.current.clientHeight, 0.1, 1000);
+    const camera = cameraRef.current || new THREE_Module.PerspectiveCamera(75, mountRef.current.clientWidth / mountRef.current.clientHeight, 0.1, 1000);
     camera.position.z = 5;
     cameraRef.current = camera;
 
-    const renderer = new THREE_Module.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
-    renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
-    renderer.setPixelRatio(typeof window !== 'undefined' ? window.devicePixelRatio : 1);
-    renderer.setClearColor(new THREE_Module.Color(backgroundColor));
-    mountRef.current.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
+    if (!rendererRef.current) {
+        rendererRef.current = new THREE_Module.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+        rendererRef.current.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
+        rendererRef.current.setPixelRatio(typeof window !== 'undefined' ? window.devicePixelRatio : 1);
+        mountRef.current.appendChild(rendererRef.current.domElement);
+        if (onCanvasReady) {
+          onCanvasReady(rendererRef.current.domElement);
+        }
+    }
+    rendererRef.current.setClearColor(new THREE_Module.Color(backgroundColor));
 
-    if (onCanvasReady) {
-      onCanvasReady(renderer.domElement);
+
+    // Cleanup existing smoke particles if they exist
+    if (smokeParticlesRef.current) {
+        scene.remove(smokeParticlesRef.current);
+        smokeParticlesRef.current.geometry.dispose();
+        (smokeParticlesRef.current.material as THREE.Material).dispose();
+        smokeParticlesRef.current = null;
+    }
+    // Create new smoke particles if enabled and count > 0
+    if (isSmokeEnabled && actualSmokeParticleCount > 0) {
+        const { geometry: smokeGeo, material: smokeMat } = initParticles(
+        actualSmokeParticleCount, false, smokeBaseColor, smokeAccentColor, smokeSpeed, smokeSpread, smokeOpacity, smokeSource, smokeBlendMode
+        );
+        if (smokeGeo && smokeMat) {
+            smokeParticlesRef.current = new THREE_Module.Points(smokeGeo, smokeMat);
+            scene.add(smokeParticlesRef.current);
+        }
     }
     
-    const { geometry: smokeGeo, material: smokeMat } = initParticles(
-      actualSmokeParticleCount, false, smokeBaseColor, smokeAccentColor, smokeSpeed, smokeSpread, smokeOpacity, smokeSource, smokeBlendMode
-    );
-    if (smokeGeo && smokeMat) {
-      const smokePoints = new THREE_Module.Points(smokeGeo, smokeMat);
-      smokePoints.visible = isSmokeEnabled;
-      scene.add(smokePoints);
-      smokeParticlesRef.current = smokePoints;
+    // Cleanup existing fire particles if they exist
+    if (fireParticlesRef.current) {
+        scene.remove(fireParticlesRef.current);
+        fireParticlesRef.current.geometry.dispose();
+        (fireParticlesRef.current.material as THREE.Material).dispose();
+        fireParticlesRef.current = null;
     }
-
-    const { geometry: fireGeo, material: fireMat } = initParticles(
-      actualFireParticleCount, true, fireBaseColor, fireAccentColor, fireSpeed, fireSpread, fireOpacity, fireParticleSource, fireBlendMode
-    );
-    if (fireGeo && fireMat) {
-      const firePoints = new THREE_Module.Points(fireGeo, fireMat);
-      firePoints.visible = isFireEnabled;
-      scene.add(firePoints);
-      fireParticlesRef.current = firePoints;
+    // Create new fire particles if enabled and count > 0
+    if (isFireEnabled && actualFireParticleCount > 0) {
+        const { geometry: fireGeo, material: fireMat } = initParticles(
+        actualFireParticleCount, true, fireBaseColor, fireAccentColor, fireSpeed, fireSpread, fireOpacity, fireParticleSource, fireBlendMode
+        );
+        if (fireGeo && fireMat) {
+            fireParticlesRef.current = new THREE_Module.Points(fireGeo, fireMat);
+            scene.add(fireParticlesRef.current);
+        }
     }
 
     const clock = new THREE_Module.Clock();
@@ -423,7 +439,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       const delta = clock.getDelta(); 
 
       if (isPlaying) {
-        if (isSmokeEnabled && smokeParticlesRef.current) {
+        if (smokeParticlesRef.current && isSmokeEnabled && actualSmokeParticleCount > 0) { // Check actual count too
           const geom = smokeParticlesRef.current.geometry as THREE.BufferGeometry;
           const positions = geom.getAttribute('position') as THREE.BufferAttribute;
           const velocities = geom.getAttribute('velocity') as THREE.BufferAttribute;
@@ -501,7 +517,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
               }
               alphas.setX(i, smokeOpacity * (0.4 + Math.random() * 0.3) * THREE_Module.MathUtils.smootherstep(alphaMod,0,1));
               
-              const initialSize = particleSizesAttr.getX(i); 
+              const initialSize = particleSizesAttr.getX(i); // This might be getting reset unintentionally if particleSizesAttr is not consistent
               const growthFactor = 1.0 + (1.0 - lifeRatio) * (2.5 + smokeSpread * 0.2); 
               particleSizesAttr.setX(i, initialSize * (1.0 + delta * growthFactor * 0.1)); 
             }
@@ -510,7 +526,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
           particleSizesAttr.needsUpdate = true; lives.needsUpdate = true; colorsAttr.needsUpdate = true;
         }
 
-        if (isFireEnabled && fireParticlesRef.current) {
+        if (fireParticlesRef.current && isFireEnabled && actualFireParticleCount > 0) { // Check actual count too
           const geom = fireParticlesRef.current.geometry as THREE.BufferGeometry;
           const positions = geom.getAttribute('position') as THREE.BufferAttribute;
           const velocities = geom.getAttribute('velocity') as THREE.BufferAttribute;
@@ -585,6 +601,8 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
               
               alphas.setX(i, fireOpacity * (0.8 + Math.random() * 0.2) * Math.pow(lifeRatio, 1.5)); 
               
+              // Ensure initialSizeForFire is defined if this logic is intended
+              // const initialSizeForFire = particleSizesAttr.getX(i); // Re-evaluate this if it was meant to be static
               particleSizesAttr.setX(i, particleSizesAttr.getX(i) * (0.95 + lifeRatio * 0.1 + Math.random() * 0.05)); 
             }
           }
@@ -612,21 +630,22 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     return () => {
       if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
       window.removeEventListener('resize', debouncedResizeHandler);
-      if (mountRef.current && rendererRef.current?.domElement) {
-        mountRef.current.removeChild(rendererRef.current.domElement);
+      // Scene objects are disposed above when re-initializing.
+      // Renderer and mount cleanup only if component unmounts.
+      if (mountRef.current && rendererRef.current?.domElement && !mountRef.current.contains(rendererRef.current.domElement)) {
+         // This check avoids removing if it's already gone or never added
+      } else if (mountRef.current && rendererRef.current?.domElement) {
+        // mountRef.current.removeChild(rendererRef.current.domElement); // only on full unmount
       }
-      rendererRef.current?.dispose();
-      smokeParticlesRef.current?.geometry.dispose(); (smokeParticlesRef.current?.material as THREE.Material)?.dispose();
-      fireParticlesRef.current?.geometry.dispose(); (fireParticlesRef.current?.material as THREE.Material)?.dispose();
+      // rendererRef.current?.dispose(); // only on full unmount
       smokeParticleTexture?.dispose(); fireParticleTexture?.dispose();
-      sceneRef.current = null; cameraRef.current = null; rendererRef.current = null;
-      smokeParticlesRef.current = null; fireParticlesRef.current = null;
+      // sceneRef.current = null; cameraRef.current = null; rendererRef.current = null; // only on full unmount
     };
   }, [
       isThreeLoaded, THREE_Module, actualSmokeParticleCount, actualFireParticleCount, onCanvasReady, initParticles, 
       backgroundColor, windDirectionX, windStrength,
-      smokeBaseColor, smokeAccentColor, smokeSpeed, smokeSpread, smokeOpacity, smokeTurbulence, smokeSource, smokeBlendMode, isSmokeEnabled, smokeDissipation, smokeBuoyancy,
-      fireBaseColor, fireAccentColor, fireSpeed, fireSpread, fireOpacity, fireTurbulence, fireParticleSource, fireBlendMode, isFireEnabled, 
+      isSmokeEnabled, smokeBaseColor, smokeAccentColor, smokeSpeed, smokeSpread, smokeOpacity, smokeTurbulence, smokeSource, smokeBlendMode, smokeDissipation, smokeBuoyancy,
+      isFireEnabled, fireBaseColor, fireAccentColor, fireSpeed, fireSpread, fireOpacity, fireTurbulence, fireParticleSource, fireBlendMode, 
       isPlaying, smokeParticleTexture, fireParticleTexture
     ]); 
 
@@ -681,19 +700,6 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     }
   }, [fireBlendMode, isThreeLoaded, THREE_Module]);
 
-
-  useEffect(() => {
-    if (smokeParticlesRef.current) {
-      smokeParticlesRef.current.visible = !!isSmokeEnabled;
-    }
-  }, [isSmokeEnabled]);
-
-  useEffect(() => {
-    if (fireParticlesRef.current) {
-      fireParticlesRef.current.visible = !!isFireEnabled;
-    }
-  }, [isFireEnabled]);
-
   useEffect(() => {
     if (rendererRef.current && THREE_Module && isThreeLoaded) {
       rendererRef.current.setClearColor(new THREE_Module.Color(backgroundColor));
@@ -724,5 +730,3 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
 };
 
 export default SmokeCanvas;
-
-      

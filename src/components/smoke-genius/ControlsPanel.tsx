@@ -4,7 +4,7 @@ import React from 'react';
 import type { Dispatch, SetStateAction, MutableRefObject } from 'react';
 import type { SimulationPreset, BlendMode, ParticleSource } from './types';
 import { Button } from "@/components/ui/button";
-import { CardTitle } from "@/components/ui/card"; // Keep for title styling
+import { CardTitle } from "@/components/ui/card"; 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -27,20 +27,12 @@ import {
   Cloud, 
   Flame, 
   Palette,
-  Paintbrush,
-  Layers,
-  Maximize,
-  Gauge,
-  Users,
-  Waves,
-  Blend,
-  Wand2,
   Wind,
-  CloudOff,
-  ChevronsUp,
-  LocateFixed,
-  MousePointer2,
-  ArrowDownToLine
+  ChevronsUp, // Buoyancy
+  LocateFixed, // Center source
+  MousePointer2, // Mouse source
+  ArrowDownToLine, // Bottom source
+  Layers // Dissipation
 } from "lucide-react";
 
 interface ControlsPanelProps {
@@ -269,12 +261,12 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                     <span className="text-xs text-muted-foreground text-center block mt-1">{smokeTurbulence.toFixed(1)}</span>
                 </div>
                  <div>
-                    <Label htmlFor="smokeDissipation" className="text-sm font-medium">Dissipation</Label>
+                    <Label htmlFor="smokeDissipation" className="text-sm font-medium flex items-center"><Layers className="mr-1.5 h-3 w-3" />Dissipation</Label>
                     <Slider id="smokeDissipation" min={0} max={1} step={0.01} value={[smokeDissipation]} onValueChange={(v) => setSmokeDissipation(v[0])} />
                     <span className="text-xs text-muted-foreground text-center block mt-1">{smokeDissipation.toFixed(2)}</span>
                 </div>
                 <div>
-                    <Label htmlFor="smokeBuoyancy" className="text-sm font-medium">Buoyancy</Label>
+                    <Label htmlFor="smokeBuoyancy" className="text-sm font-medium flex items-center"><ChevronsUp className="mr-1.5 h-3 w-3" />Buoyancy</Label>
                     <Slider id="smokeBuoyancy" min={0} max={0.05} step={0.001} value={[smokeBuoyancy]} onValueChange={(v) => setSmokeBuoyancy(v[0])} />
                     <span className="text-xs text-muted-foreground text-center block mt-1">{smokeBuoyancy.toFixed(3)}</span>
                 </div>
@@ -376,32 +368,30 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
             )}
           </TabsContent>
 
-          <TabsContent value="media" className="mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <TabsContent value="media" className="mt-4 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <Button onClick={() => setIsPlaying(!isPlaying)} variant="outline" className="w-full">
                   {isPlaying ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
-                  {isPlaying ? 'Pause Simulation' : 'Play Simulation'}
+                  {isPlaying ? 'Pause' : 'Play'}
                 </Button>
                 {!isRecording ? (
                     <Button onClick={onStartRecording} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                    <CircleDot className="mr-2 h-4 w-4" /> Start Recording
+                    <CircleDot className="mr-2 h-4 w-4" /> Record
                     </Button>
                 ) : (
                     <Button onClick={onStopRecording} variant="destructive" className="w-full">
-                    <StopCircle className="mr-2 h-4 w-4" /> Stop Recording
+                    <StopCircle className="mr-2 h-4 w-4" /> Stop
                     </Button>
                 )}
-                {recordedVideoUrl && (
-                    <Button 
-                      onClick={onDownloadRecording} 
-                      variant="outline" 
-                      className="w-full"
-                      disabled={!mediaRecorderRef.current}
-                    >
+                <Button 
+                    onClick={onDownloadRecording} 
+                    variant="outline" 
+                    className="w-full"
+                    disabled={!recordedVideoUrl || !mediaRecorderRef.current}
+                >
                     <Download className="mr-2 h-4 w-4" /> 
-                    Download {mediaRecorderRef.current?.mimeType.includes('mp4') ? 'MP4' : 'WebM'}
-                    </Button>
-                )}
+                    Save
+                </Button>
             </div>
              {recordedVideoUrl && (
                 <div className="mt-4">
@@ -417,4 +407,3 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
 };
 
 export default ControlsPanel;
-
