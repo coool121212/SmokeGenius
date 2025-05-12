@@ -5,32 +5,37 @@ export type ParticleSource = "Center" | "Mouse" | "Bottom";
 export interface SimulationPreset {
   name: string;
   description?: string;
+  particleText?: string; // New: Optional text for shaping
+
+  // Smoke
   isSmokeEnabled: boolean;
-  smokeDensity: number; 
+  smokeDensity: number;
   smokeBaseColor: string;
   smokeAccentColor: string;
   smokeSpeed: number;
-  smokeSpread: number; 
+  smokeSpread: number;
   smokeBlendMode: BlendMode;
   smokeSource: ParticleSource;
   smokeOpacity: number;
   smokeTurbulence: number;
-  smokeDissipation: number; // New: 0 (slow) to 1 (fast)
-  smokeBuoyancy: number; // New: 0 (none) to ~0.05 (strong)
+  smokeDissipation: number;
+  smokeBuoyancy: number;
 
+  // Fire
   isFireEnabled: boolean;
   fireBaseColor: string;
   fireAccentColor: string;
-  fireDensity: number; 
+  fireDensity: number;
   fireSpeed: number;
-  fireSpread: number; 
+  fireSpread: number;
   fireParticleSource: ParticleSource;
   fireBlendMode: BlendMode;
   fireOpacity: number;
   fireTurbulence: number;
 
+  // Scene
   backgroundColor: string;
-  windDirectionX: number; 
-  windStrength: number; 
+  windDirectionX: number;
+  windStrength: number;
 }
-
+```

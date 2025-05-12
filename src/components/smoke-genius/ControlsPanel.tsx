@@ -4,38 +4,95 @@ import React from 'react';
 import type { Dispatch, SetStateAction, MutableRefObject } from 'react';
 import type { SimulationPreset, BlendMode, ParticleSource } from './types';
 import { Button } from "@/components/ui/button";
-import { CardTitle } from "@/components/ui/card"; 
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Sidebar,
   SidebarHeader,
   SidebarContent,
+  SidebarTrigger as SidebarToggle,
 } from "@/components/ui/sidebar";
 import {
-  CircleDot, 
-  StopCircle, 
-  Download, 
-  Play, 
-  Pause, 
-  Settings2, 
-  Video, 
-  Cloud, 
-  Flame, 
-  Palette,
-  Wind,
+  CircleDot, // Record
+  StopCircle, // Stop Record
+  Download, // Download
+  Play, // Play Sim
+  Pause, // Pause Sim
+  Settings2, // Main Panel Icon
+  Video, // Media Tab Icon
+  Cloud, // Smoke Tab Icon
+  Flame, // Fire Tab Icon
+  Palette, // Base Color / Scene
+  Paintbrush, // Accent Color
+  Wind, // Wind
   ChevronsUp, // Buoyancy
-  LocateFixed, // Center source
-  MousePointer2, // Mouse source
-  ArrowDownToLine, // Bottom source
-  Layers // Dissipation
+  LocateFixed, // Particle Source (Center)
+  MousePointerSquare, // Particle Source (Mouse) -> Replaced with MousePointer2
+  MousePointer2, // Correct icon
+  ArrowDownToLine, // Particle Source (Bottom)
+  Layers2, // Dissipation / Opacity
+  Gauge, // Speed
+  Maximize2, // Size/Spread
+  Users, // Count/Density
+  Waves, // Turbulence
+  Type, // Text input icon
+  Info // Tooltip icon
 } from "lucide-react";
 
+// Helper component for sliders with tooltips and numeric display
+interface ControlSliderProps {
+  id: string;
+  label: string;
+  tooltip: string;
+  icon?: React.ElementType;
+  min: number;
+  max: number;
+  step: number;
+  value: number;
+  onValueChange: (value: number) => void;
+  unit?: string;
+  decimals?: number;
+}
+
+const ControlSlider: React.FC<ControlSliderProps> = ({ id, label, tooltip, icon: Icon, min, max, step, value, onValueChange, unit = '', decimals = 2 }) => (
+  <TooltipProvider delayDuration={100}>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <Label htmlFor={id} className="text-sm font-medium flex items-center">
+              {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
+              {label}
+            </Label>
+            <span className="text-xs text-muted-foreground">{value.toFixed(decimals)}{unit}</span>
+          </div>
+          <Slider
+            id={id}
+            min={min}
+            max={max}
+            step={step}
+            value={[value]}
+            onValueChange={(v) => onValueChange(v[0])}
+            aria-label={`${label} slider`}
+          />
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="top" align="center">
+        <p>{tooltip}</p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
+
 interface ControlsPanelProps {
+  // Smoke Props
   isSmokeEnabled: boolean;
   setIsSmokeEnabled: Dispatch<SetStateAction<boolean>>;
   smokeDensity: number;
@@ -46,7 +103,7 @@ interface ControlsPanelProps {
   setSmokeAccentColor: Dispatch<SetStateAction<string>>;
   smokeSpeed: number;
   setSmokeSpeed: Dispatch<SetStateAction<number>>;
-  smokeSpread: number; 
+  smokeSpread: number;
   setSmokeSpread: Dispatch<SetStateAction<number>>;
   smokeBlendMode: BlendMode;
   setSmokeBlendMode: Dispatch<SetStateAction<BlendMode>>;
@@ -60,7 +117,10 @@ interface ControlsPanelProps {
   setSmokeDissipation: Dispatch<SetStateAction<number>>;
   smokeBuoyancy: number;
   setSmokeBuoyancy: Dispatch<SetStateAction<number>>;
+  particleText: string; // New prop for text shaping
+  setParticleText: Dispatch<SetStateAction<string>>; // New prop setter
 
+  // Fire Props
   isFireEnabled: boolean;
   setIsFireEnabled: Dispatch<SetStateAction<boolean>>;
   fireBaseColor: string;
@@ -71,7 +131,7 @@ interface ControlsPanelProps {
   setFireDensity: Dispatch<SetStateAction<number>>;
   fireSpeed: number;
   setFireSpeed: Dispatch<SetStateAction<number>>;
-  fireSpread: number; 
+  fireSpread: number;
   setFireSpread: Dispatch<SetStateAction<number>>;
   fireParticleSource: ParticleSource;
   setFireParticleSource: Dispatch<SetStateAction<ParticleSource>>;
@@ -82,13 +142,15 @@ interface ControlsPanelProps {
   fireTurbulence: number;
   setFireTurbulence: Dispatch<SetStateAction<number>>;
 
+  // Scene Props
   backgroundColor: string;
   setBackgroundColor: Dispatch<SetStateAction<string>>;
   windDirectionX: number;
   setWindDirectionX: Dispatch<SetStateAction<number>>;
   windStrength: number;
   setWindStrength: Dispatch<SetStateAction<number>>;
-  
+
+  // Media Props
   isRecording: boolean;
   onStartRecording: () => void;
   onStopRecording: () => void;
@@ -97,11 +159,14 @@ interface ControlsPanelProps {
   isPlaying: boolean;
   setIsPlaying: Dispatch<SetStateAction<boolean>>;
   mediaRecorderRef: MutableRefObject<MediaRecorder | null>;
+
+  // Presets
   presets: SimulationPreset[];
   onApplyPreset: (preset: SimulationPreset) => void;
 }
 
 const ControlsPanel: React.FC<ControlsPanelProps> = ({
+  // Smoke Props
   isSmokeEnabled, setIsSmokeEnabled,
   smokeDensity, setSmokeDensity,
   smokeBaseColor, setSmokeBaseColor,
@@ -114,7 +179,9 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
   smokeTurbulence, setSmokeTurbulence,
   smokeDissipation, setSmokeDissipation,
   smokeBuoyancy, setSmokeBuoyancy,
+  particleText, setParticleText, // Destructure new props
 
+  // Fire Props
   isFireEnabled, setIsFireEnabled,
   fireBaseColor, setFireBaseColor,
   fireAccentColor, setFireAccentColor,
@@ -126,26 +193,30 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
   fireOpacity, setFireOpacity,
   fireTurbulence, setFireTurbulence,
 
+  // Scene Props
   backgroundColor, setBackgroundColor,
   windDirectionX, setWindDirectionX,
   windStrength, setWindStrength,
 
+  // Media Props
   isRecording, onStartRecording, onStopRecording, onDownloadRecording, recordedVideoUrl,
   isPlaying, setIsPlaying,
   mediaRecorderRef,
+
+  // Presets
   presets, onApplyPreset
 }) => {
-  const particleSourceOptions: { value: ParticleSource; label: string; icon: React.ElementType }[] = [
-    { value: "Center", label: "Center", icon: LocateFixed },
-    { value: "Mouse", label: "Mouse", icon: MousePointer2 },
-    { value: "Bottom", label: "Bottom", icon: ArrowDownToLine },
+  const particleSourceOptions: { value: ParticleSource; label: string; icon: React.ElementType; tooltip: string }[] = [
+    { value: "Bottom", label: "Bottom", icon: ArrowDownToLine, tooltip: "Particles originate from the bottom edge." },
+    { value: "Center", label: "Center", icon: LocateFixed, tooltip: "Particles originate from the center." },
+    { value: "Mouse", label: "Mouse", icon: MousePointer2, tooltip: "Particles follow the mouse cursor." },
   ];
-  
-  const blendModeOptions: {value: BlendMode, label: string}[] = [
-    { value: "Normal", label: "Normal"},
-    { value: "Additive", label: "Additive (Brighter/Ethereal)"},
-    { value: "Subtractive", label: "Subtractive (Darker)"},
-    { value: "Multiply", label: "Multiply (Intense/Shadow)"},
+
+  const blendModeOptions: { value: BlendMode; label: string; tooltip: string }[] = [
+    { value: "Normal", label: "Normal", tooltip: "Standard alpha blending." },
+    { value: "Additive", label: "Additive", tooltip: "Brighter where particles overlap (good for fire, energy)." },
+    { value: "Subtractive", label: "Subtractive", tooltip: "Darker where particles overlap (uncommon)." },
+    { value: "Multiply", label: "Multiply", tooltip: "Darkens based on particle color (can create shadows)." },
   ];
 
   return (
@@ -155,14 +226,20 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
           <CardTitle className="text-lg flex items-center m-0">
             <Settings2 className="mr-2 h-5 w-5 text-primary" /> Simulation Controls
           </CardTitle>
+          <SidebarToggle />
         </div>
       </SidebarHeader>
       <SidebarContent className="p-3 space-y-4 overflow-y-auto">
+        <TooltipProvider delayDuration={100}>
           <div>
             <Label htmlFor="presetSelect" className="text-sm font-medium mb-1 block">Preset</Label>
             <Select onValueChange={(value) => {
               const selectedPreset = presets.find(p => p.name === value);
-              if (selectedPreset) onApplyPreset(selectedPreset);
+              if (selectedPreset) {
+                onApplyPreset(selectedPreset);
+                // Also apply preset text if it exists, otherwise clear text
+                setParticleText(selectedPreset.particleText || '');
+              }
             }}>
               <SelectTrigger id="presetSelect" aria-label="Select preset">
                 <SelectValue placeholder="Select a preset" />
@@ -177,230 +254,330 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
             </Select>
           </div>
 
+          {/* --- Scene Controls --- */}
           <div className="space-y-3 pt-2 border-t border-border">
-              <Label className="text-base font-semibold flex items-center"><Palette className="mr-2 h-4 w-4 text-primary" />Scene</Label>
-            <div>
-                <Label htmlFor="backgroundColor" className="text-sm font-medium">Background Color</Label>
-                <div className="flex items-center gap-2 mt-1">
-                <Input 
-                    id="backgroundColor" 
-                    type="color" 
-                    value={backgroundColor} 
-                    onChange={(e) => setBackgroundColor(e.target.value)} 
-                    className="p-1 h-10 w-12 rounded-md border-input"
-                    aria-label="Background color picker"
-                />
-                <span className="text-xs text-muted-foreground">{backgroundColor.toUpperCase()}</span>
-                </div>
-            </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                <div>
-                    <Label htmlFor="windDirectionX" className="text-sm font-medium">Wind Dir. X</Label>
-                    <Slider id="windDirectionX" min={-1} max={1} step={0.01} value={[windDirectionX]} onValueChange={(v) => setWindDirectionX(v[0])} />
-                    <span className="text-xs text-muted-foreground text-center block mt-1">{windDirectionX.toFixed(2)}</span>
-                </div>
-                <div>
-                    <Label htmlFor="windStrength" className="text-sm font-medium">Wind Strength</Label>
-                    <Slider id="windStrength" min={0} max={0.05} step={0.001} value={[windStrength]} onValueChange={(v) => setWindStrength(v[0])} />
-                    <span className="text-xs text-muted-foreground text-center block mt-1">{windStrength.toFixed(3)}</span>
-                </div>
+            <Label className="text-base font-semibold flex items-center"><Palette className="mr-2 h-4 w-4 text-primary" />Scene</Label>
+            <div className="grid grid-cols-1 gap-y-3">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Label htmlFor="backgroundColor" className="text-sm font-medium">Background Color</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Input
+                        id="backgroundColor"
+                        type="color"
+                        value={backgroundColor}
+                        onChange={(e) => setBackgroundColor(e.target.value)}
+                        className="p-1 h-8 w-8 rounded-md border-input cursor-pointer"
+                        aria-label="Background color picker"
+                      />
+                      <span className="text-xs text-muted-foreground">{backgroundColor.toUpperCase()}</span>
+                    </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" align="center">
+                  <p>Set the background color of the simulation canvas.</p>
+                </TooltipContent>
+              </Tooltip>
+              <ControlSlider
+                id="windDirectionX"
+                label="Wind Direction X"
+                tooltip="Horizontal wind direction (-1 left, 1 right)."
+                icon={Wind}
+                min={-1} max={1} step={0.01}
+                value={windDirectionX} onValueChange={setWindDirectionX}
+                decimals={2}
+              />
+              <ControlSlider
+                id="windStrength"
+                label="Wind Strength"
+                tooltip="How strongly the wind affects particles."
+                icon={Wind}
+                min={0} max={0.05} step={0.001}
+                value={windStrength} onValueChange={setWindStrength}
+                decimals={3}
+              />
             </div>
           </div>
 
-        <Tabs defaultValue="smoke" className="w-full pt-2 border-t border-border">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="smoke"><Cloud className="mr-1.5 h-4 w-4" />Smoke</TabsTrigger>
-            <TabsTrigger value="fire"><Flame className="mr-1.5 h-4 w-4" />Fire</TabsTrigger>
-            <TabsTrigger value="media"><Video className="mr-1.5 h-4 w-4" />Media</TabsTrigger>
-          </TabsList>
+          {/* --- Tabs --- */}
+          <Tabs defaultValue="smoke" className="w-full pt-2 border-t border-border">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="smoke"><Cloud className="mr-1.5 h-4 w-4" />Smoke</TabsTrigger>
+              <TabsTrigger value="fire"><Flame className="mr-1.5 h-4 w-4" />Fire</TabsTrigger>
+              <TabsTrigger value="media"><Video className="mr-1.5 h-4 w-4" />Media</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="smoke" className="mt-4">
-            <div className="flex items-center justify-between mb-4">
+            {/* --- Smoke Tab --- */}
+            <TabsContent value="smoke" className="mt-4 space-y-4">
+              <div className="flex items-center justify-between">
                 <Label htmlFor="smokeToggle" className="text-base font-semibold">Enable Smoke</Label>
                 <Switch id="smokeToggle" checked={isSmokeEnabled} onCheckedChange={setIsSmokeEnabled} />
-            </div>
-            {isSmokeEnabled && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                <div>
-                    <Label htmlFor="smokeBaseColor" className="text-sm font-medium">Base Color</Label>
-                    <div className="flex items-center gap-2 mt-1">
-                    <Input id="smokeBaseColor" type="color" value={smokeBaseColor} onChange={(e) => setSmokeBaseColor(e.target.value)} className="p-1 h-10 w-12 rounded-md border-input" />
-                    <span className="text-sm text-muted-foreground">{smokeBaseColor.toUpperCase()}</span>
-                    </div>
-                </div>
-                <div>
-                    <Label htmlFor="smokeAccentColor" className="text-sm font-medium">Accent Color</Label>
-                    <div className="flex items-center gap-2 mt-1">
-                    <Input id="smokeAccentColor" type="color" value={smokeAccentColor} onChange={(e) => setSmokeAccentColor(e.target.value)} className="p-1 h-10 w-12 rounded-md border-input" />
-                    <span className="text-sm text-muted-foreground">{smokeAccentColor.toUpperCase()}</span>
-                    </div>
-                </div>
-                <div>
-                    <Label htmlFor="smokeOpacity" className="text-sm font-medium">Opacity</Label>
-                    <Slider id="smokeOpacity" min={0} max={1} step={0.01} value={[smokeOpacity]} onValueChange={(v) => setSmokeOpacity(v[0])} />
-                    <span className="text-xs text-muted-foreground text-center block mt-1">{smokeOpacity.toFixed(2)}</span>
-                </div>
-                <div>
-                    <Label htmlFor="smokeSpread" className="text-sm font-medium">Size (Spread)</Label>
-                    <Slider id="smokeSpread" min={0.1} max={5} step={0.1} value={[smokeSpread]} onValueChange={(v) => setSmokeSpread(v[0])} />
-                    <span className="text-xs text-muted-foreground text-center block mt-1">{smokeSpread.toFixed(1)}</span>
-                </div>
-                <div>
-                    <Label htmlFor="smokeSpeed" className="text-sm font-medium">Speed</Label>
-                    <Slider id="smokeSpeed" min={0.001} max={0.1} step={0.001} value={[smokeSpeed]} onValueChange={(v) => setSmokeSpeed(v[0])} />
-                    <span className="text-xs text-muted-foreground text-center block mt-1">{smokeSpeed.toFixed(3)}</span>
-                </div>
-                <div>
-                    <Label htmlFor="smokeDensity" className="text-sm font-medium">Count (Density)</Label>
-                    <Slider id="smokeDensity" min={100} max={8000} step={100} value={[smokeDensity]} onValueChange={(v) => setSmokeDensity(v[0])} />
-                    <span className="text-xs text-muted-foreground text-center block mt-1">{smokeDensity}</span>
-                </div>
-                <div>
-                    <Label htmlFor="smokeTurbulence" className="text-sm font-medium">Turbulence</Label>
-                    <Slider id="smokeTurbulence" min={0} max={5} step={0.1} value={[smokeTurbulence]} onValueChange={(v) => setSmokeTurbulence(v[0])} />
-                    <span className="text-xs text-muted-foreground text-center block mt-1">{smokeTurbulence.toFixed(1)}</span>
-                </div>
-                 <div>
-                    <Label htmlFor="smokeDissipation" className="text-sm font-medium flex items-center"><Layers className="mr-1.5 h-3 w-3" />Dissipation</Label>
-                    <Slider id="smokeDissipation" min={0} max={1} step={0.01} value={[smokeDissipation]} onValueChange={(v) => setSmokeDissipation(v[0])} />
-                    <span className="text-xs text-muted-foreground text-center block mt-1">{smokeDissipation.toFixed(2)}</span>
-                </div>
-                <div>
-                    <Label htmlFor="smokeBuoyancy" className="text-sm font-medium flex items-center"><ChevronsUp className="mr-1.5 h-3 w-3" />Buoyancy</Label>
-                    <Slider id="smokeBuoyancy" min={0} max={0.05} step={0.001} value={[smokeBuoyancy]} onValueChange={(v) => setSmokeBuoyancy(v[0])} />
-                    <span className="text-xs text-muted-foreground text-center block mt-1">{smokeBuoyancy.toFixed(3)}</span>
-                </div>
-                <div>
-                    <Label htmlFor="smokeBlendMode" className="text-sm font-medium">Blend Mode</Label>
-                    <Select value={smokeBlendMode} onValueChange={(value: BlendMode) => setSmokeBlendMode(value)}>
-                    <SelectTrigger id="smokeBlendMode"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                        {blendModeOptions.map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
-                    </SelectContent>
-                    </Select>
-                </div>
-                <div>
-                    <Label htmlFor="smokeSource" className="text-sm font-medium">Particle Source</Label>
-                    <Select value={smokeSource} onValueChange={(value: ParticleSource) => setSmokeSource(value)}>
-                    <SelectTrigger id="smokeSource"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                        {particleSourceOptions.map(option => 
-                            <SelectItem key={option.value} value={option.value}>
-                                <div className="flex items-center"><option.icon className="mr-2 h-4 w-4"/>{option.label}</div>
-                            </SelectItem>
-                        )}
-                    </SelectContent>
-                    </Select>
-                </div>
-                </div>
-            )}
-          </TabsContent>
+              </div>
+              {isSmokeEnabled && (
+                <div className="grid grid-cols-1 gap-y-3">
+                  {/* Color Pickers */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                         <div>
+                            <Label htmlFor="smokeBaseColor" className="text-sm font-medium flex items-center"><Palette className="mr-1.5 h-3.5 w-3.5"/>Base Color</Label>
+                            <div className="flex items-center gap-2 mt-1">
+                                <Input id="smokeBaseColor" type="color" value={smokeBaseColor} onChange={(e) => setSmokeBaseColor(e.target.value)} className="p-1 h-8 w-8 rounded-md border-input cursor-pointer" />
+                                <span className="text-xs text-muted-foreground">{smokeBaseColor.toUpperCase()}</span>
+                            </div>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" align="center"><p>The main color of the smoke particles.</p></TooltipContent>
+                    </Tooltip>
+                     <Tooltip>
+                       <TooltipTrigger asChild>
+                        <div>
+                            <Label htmlFor="smokeAccentColor" className="text-sm font-medium flex items-center"><Paintbrush className="mr-1.5 h-3.5 w-3.5"/>Accent Color</Label>
+                            <div className="flex items-center gap-2 mt-1">
+                                <Input id="smokeAccentColor" type="color" value={smokeAccentColor} onChange={(e) => setSmokeAccentColor(e.target.value)} className="p-1 h-8 w-8 rounded-md border-input cursor-pointer" />
+                                <span className="text-xs text-muted-foreground">{smokeAccentColor.toUpperCase()}</span>
+                            </div>
+                        </div>
+                       </TooltipTrigger>
+                       <TooltipContent side="top" align="center"><p>A secondary color blended randomly for variation.</p></TooltipContent>
+                    </Tooltip>
+                  </div>
+                  {/* Sliders */}
+                  <ControlSlider id="smokeOpacity" label="Opacity" tooltip="Overall transparency of smoke particles (0=invisible, 1=opaque)." icon={Layers2} min={0} max={1} step={0.01} value={smokeOpacity} onValueChange={setSmokeOpacity} decimals={2} />
+                  <ControlSlider id="smokeSpread" label="Size (Spread)" tooltip="Average size and spread area of smoke particles." icon={Maximize2} min={0.1} max={5} step={0.1} value={smokeSpread} onValueChange={setSmokeSpread} decimals={1} />
+                  <ControlSlider id="smokeSpeed" label="Speed" tooltip="Base upward speed of smoke particles." icon={Gauge} min={0.001} max={0.1} step={0.001} value={smokeSpeed} onValueChange={setSmokeSpeed} decimals={3} />
+                  <ControlSlider id="smokeDensity" label="Count (Density)" tooltip="Number of smoke particles simulated (max 8000)." icon={Users} min={100} max={8000} step={100} value={smokeDensity} onValueChange={setSmokeDensity} decimals={0} />
+                  <ControlSlider id="smokeTurbulence" label="Turbulence" tooltip="Amount of chaotic, swirling motion applied." icon={Waves} min={0} max={5} step={0.1} value={smokeTurbulence} onValueChange={setSmokeTurbulence} decimals={1} />
+                  <ControlSlider id="smokeDissipation" label="Dissipation" tooltip="How quickly particles fade out (0=slow, 1=fast)." icon={Layers2} min={0} max={1} step={0.01} value={smokeDissipation} onValueChange={setSmokeDissipation} decimals={2} />
+                  <ControlSlider id="smokeBuoyancy" label="Buoyancy" tooltip="How strongly particles rise (simulates heat)." icon={ChevronsUp} min={0} max={0.05} step={0.001} value={smokeBuoyancy} onValueChange={setSmokeBuoyancy} decimals={3} />
 
-          <TabsContent value="fire" className="mt-4">
-             <div className="flex items-center justify-between mb-4">
+                  {/* Selects */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <Label htmlFor="smokeBlendMode" className="text-sm font-medium">Blend Mode</Label>
+                        <Select value={smokeBlendMode} onValueChange={(value: BlendMode) => setSmokeBlendMode(value)}>
+                          <SelectTrigger id="smokeBlendMode"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {blendModeOptions.map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="center">
+                      <p>How particle colors mix when overlapping. Additive is often good for fire/light.</p>
+                      <p>Current: {blendModeOptions.find(o => o.value === smokeBlendMode)?.tooltip}</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <Label htmlFor="smokeSource" className="text-sm font-medium">Particle Source</Label>
+                        <Select value={smokeSource} onValueChange={(value: ParticleSource) => setSmokeSource(value)} disabled={!!particleText}>
+                          <SelectTrigger id="smokeSource"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {particleSourceOptions.map(option =>
+                              <SelectItem key={option.value} value={option.value}>
+                                <div className="flex items-center"><option.icon className="mr-2 h-4 w-4" />{option.label}</div>
+                              </SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        {!!particleText && <p className="text-xs text-muted-foreground mt-1">Source overridden by text input.</p>}
+                      </div>
+                    </TooltipTrigger>
+                     <TooltipContent side="top" align="center">
+                       <p>Where new particles originate. Disabled if text shaping is active.</p>
+                       <p>Current: {particleSourceOptions.find(o => o.value === smokeSource)?.tooltip}</p>
+                     </TooltipContent>
+                  </Tooltip>
+
+                   {/* Text Shaping Input */}
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div>
+                                <Label htmlFor="particleTextSmoke" className="text-sm font-medium flex items-center"><Type className="mr-1.5 h-3.5 w-3.5" />Particle Text</Label>
+                                <Textarea
+                                    id="particleTextSmoke"
+                                    placeholder="Enter text..."
+                                    value={particleText}
+                                    onChange={(e) => setParticleText(e.target.value)}
+                                    className="mt-1 text-sm"
+                                    rows={2}
+                                />
+                                <p className="text-xs text-muted-foreground mt-1">If text is entered, particles will form this shape, overriding the 'Particle Source' setting.</p>
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center">
+                            <p>Make particles form the shape of this text. Clears the 'Particle Source' setting.</p>
+                        </TooltipContent>
+                    </Tooltip>
+
+                </div>
+              )}
+            </TabsContent>
+
+            {/* --- Fire Tab --- */}
+            <TabsContent value="fire" className="mt-4 space-y-4">
+              <div className="flex items-center justify-between">
                 <Label htmlFor="fireToggle" className="text-base font-semibold">Enable Fire</Label>
                 <Switch id="fireToggle" checked={isFireEnabled} onCheckedChange={setIsFireEnabled} />
-            </div>
-            {isFireEnabled && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                <div>
-                    <Label htmlFor="fireBaseColor" className="text-sm font-medium">Base Color</Label>
-                     <div className="flex items-center gap-2 mt-1">
-                        <Input id="fireBaseColor" type="color" value={fireBaseColor} onChange={(e) => setFireBaseColor(e.target.value)} className="p-1 h-10 w-12 rounded-md border-input" />
-                        <span className="text-sm text-muted-foreground">{fireBaseColor.toUpperCase()}</span>
+              </div>
+              {isFireEnabled && (
+                 <div className="grid grid-cols-1 gap-y-3">
+                   {/* Color Pickers */}
+                   <div className="grid grid-cols-2 gap-4">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                              <Label htmlFor="fireBaseColor" className="text-sm font-medium flex items-center"><Palette className="mr-1.5 h-3.5 w-3.5"/>Base Color</Label>
+                              <div className="flex items-center gap-2 mt-1">
+                                  <Input id="fireBaseColor" type="color" value={fireBaseColor} onChange={(e) => setFireBaseColor(e.target.value)} className="p-1 h-8 w-8 rounded-md border-input cursor-pointer" />
+                                  <span className="text-xs text-muted-foreground">{fireBaseColor.toUpperCase()}</span>
+                              </div>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center"><p>The main color of the fire particles.</p></TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                         <TooltipTrigger asChild>
+                            <div>
+                              <Label htmlFor="fireAccentColor" className="text-sm font-medium flex items-center"><Paintbrush className="mr-1.5 h-3.5 w-3.5"/>Accent Color</Label>
+                              <div className="flex items-center gap-2 mt-1">
+                                  <Input id="fireAccentColor" type="color" value={fireAccentColor} onChange={(e) => setFireAccentColor(e.target.value)} className="p-1 h-8 w-8 rounded-md border-input cursor-pointer" />
+                                  <span className="text-xs text-muted-foreground">{fireAccentColor.toUpperCase()}</span>
+                              </div>
+                          </div>
+                         </TooltipTrigger>
+                         <TooltipContent side="top" align="center"><p>A secondary color blended randomly for variation.</p></TooltipContent>
+                      </Tooltip>
                     </div>
-                </div>
-                <div>
-                    <Label htmlFor="fireAccentColor" className="text-sm font-medium">Accent Color</Label>
-                    <div className="flex items-center gap-2 mt-1">
-                        <Input id="fireAccentColor" type="color" value={fireAccentColor} onChange={(e) => setFireAccentColor(e.target.value)} className="p-1 h-10 w-12 rounded-md border-input" />
-                        <span className="text-sm text-muted-foreground">{fireAccentColor.toUpperCase()}</span>
-                    </div>
-                </div>
-                <div>
-                    <Label htmlFor="fireOpacity" className="text-sm font-medium">Opacity</Label>
-                    <Slider id="fireOpacity" min={0} max={1} step={0.01} value={[fireOpacity]} onValueChange={(v) => setFireOpacity(v[0])} />
-                     <span className="text-xs text-muted-foreground text-center block mt-1">{fireOpacity.toFixed(2)}</span>
-                </div>
-                <div>
-                    <Label htmlFor="fireSpread" className="text-sm font-medium">Size (Spread)</Label>
-                    <Slider id="fireSpread" min={0.1} max={3} step={0.1} value={[fireSpread]} onValueChange={(v) => setFireSpread(v[0])} />
-                    <span className="text-xs text-muted-foreground text-center block mt-1">{fireSpread.toFixed(1)}</span>
-                </div>
-                <div>
-                    <Label htmlFor="fireSpeed" className="text-sm font-medium">Speed</Label>
-                    <Slider id="fireSpeed" min={0.005} max={0.2} step={0.005} value={[fireSpeed]} onValueChange={(v) => setFireSpeed(v[0])} />
-                    <span className="text-xs text-muted-foreground text-center block mt-1">{fireSpeed.toFixed(3)}</span>
-                </div>
-                <div>
-                    <Label htmlFor="fireDensity" className="text-sm font-medium">Count (Intensity)</Label>
-                    <Slider id="fireDensity" min={100} max={5000} step={50} value={[fireDensity]} onValueChange={(v) => setFireDensity(v[0])} />
-                    <span className="text-xs text-muted-foreground text-center block mt-1">{fireDensity}</span>
-                </div>
-                <div>
-                    <Label htmlFor="fireTurbulence" className="text-sm font-medium">Turbulence</Label>
-                    <Slider id="fireTurbulence" min={0} max={5} step={0.1} value={[fireTurbulence]} onValueChange={(v) => setFireTurbulence(v[0])} />
-                    <span className="text-xs text-muted-foreground text-center block mt-1">{fireTurbulence.toFixed(1)}</span>
-                </div>
-                <div>
-                    <Label htmlFor="fireBlendMode" className="text-sm font-medium">Blend Mode</Label>
-                     <Select value={fireBlendMode} onValueChange={(value: BlendMode) => setFireBlendMode(value)}>
-                        <SelectTrigger id="fireBlendMode"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            {blendModeOptions.map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                </div>
-                 <div>
-                    <Label htmlFor="fireSource" className="text-sm font-medium">Particle Source</Label>
-                    <Select value={fireParticleSource} onValueChange={(value: ParticleSource) => setFireParticleSource(value)}>
-                        <SelectTrigger id="fireSource"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            {particleSourceOptions.map(option => 
-                                <SelectItem key={option.value} value={option.value}>
-                                    <div className="flex items-center"><option.icon className="mr-2 h-4 w-4"/>{option.label}</div>
-                                </SelectItem>
-                            )}
-                        </SelectContent>
-                    </Select>
-                </div>
-                </div>
-            )}
-          </TabsContent>
 
-          <TabsContent value="media" className="mt-4 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <Button onClick={() => setIsPlaying(!isPlaying)} variant="outline" className="w-full">
-                  {isPlaying ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
-                  {isPlaying ? 'Pause' : 'Play'}
-                </Button>
-                {!isRecording ? (
-                    <Button onClick={onStartRecording} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                    <CircleDot className="mr-2 h-4 w-4" /> Record
-                    </Button>
-                ) : (
-                    <Button onClick={onStopRecording} variant="destructive" className="w-full">
-                    <StopCircle className="mr-2 h-4 w-4" /> Stop
-                    </Button>
-                )}
-                <Button 
-                    onClick={onDownloadRecording} 
-                    variant="outline" 
-                    className="w-full"
-                    disabled={!recordedVideoUrl || !mediaRecorderRef.current}
-                >
-                    <Download className="mr-2 h-4 w-4" /> 
-                    Save
-                </Button>
-            </div>
-             {recordedVideoUrl && (
-                <div className="mt-4">
-                    <Label className="text-sm font-medium">Preview:</Label>
-                    <video src={recordedVideoUrl} controls className="w-full rounded-md mt-1 max-h-60 aspect-video bg-muted"></video>
+                  {/* Sliders */}
+                  <ControlSlider id="fireOpacity" label="Opacity" tooltip="Overall transparency of fire particles." icon={Layers2} min={0} max={1} step={0.01} value={fireOpacity} onValueChange={setFireOpacity} decimals={2} />
+                  <ControlSlider id="fireSpread" label="Size (Spread)" tooltip="Average size and spread area of fire particles." icon={Maximize2} min={0.1} max={3} step={0.1} value={fireSpread} onValueChange={setFireSpread} decimals={1} />
+                  <ControlSlider id="fireSpeed" label="Speed" tooltip="Base upward speed of fire particles." icon={Gauge} min={0.005} max={0.2} step={0.005} value={fireSpeed} onValueChange={setFireSpeed} decimals={3} />
+                  <ControlSlider id="fireDensity" label="Count (Intensity)" tooltip="Number of fire particles (max 5000)." icon={Users} min={100} max={5000} step={50} value={fireDensity} onValueChange={setFireDensity} decimals={0} />
+                  <ControlSlider id="fireTurbulence" label="Turbulence" tooltip="Amount of chaotic, flickering motion." icon={Waves} min={0} max={5} step={0.1} value={fireTurbulence} onValueChange={setFireTurbulence} decimals={1} />
+
+                  {/* Selects */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <Label htmlFor="fireBlendMode" className="text-sm font-medium">Blend Mode</Label>
+                        <Select value={fireBlendMode} onValueChange={(value: BlendMode) => setFireBlendMode(value)}>
+                          <SelectTrigger id="fireBlendMode"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {blendModeOptions.map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="center">
+                      <p>How particle colors mix. Additive is recommended for fire.</p>
+                       <p>Current: {blendModeOptions.find(o => o.value === fireBlendMode)?.tooltip}</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                     <TooltipTrigger asChild>
+                      <div>
+                        <Label htmlFor="fireSource" className="text-sm font-medium">Particle Source</Label>
+                        <Select value={fireParticleSource} onValueChange={(value: ParticleSource) => setFireParticleSource(value)} disabled={!!particleText}>
+                          <SelectTrigger id="fireSource"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {particleSourceOptions.map(option =>
+                              <SelectItem key={option.value} value={option.value}>
+                                <div className="flex items-center"><option.icon className="mr-2 h-4 w-4" />{option.label}</div>
+                              </SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                         {!!particleText && <p className="text-xs text-muted-foreground mt-1">Source overridden by text input.</p>}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="center">
+                      <p>Where new particles originate. Disabled if text shaping is active.</p>
+                      <p>Current: {particleSourceOptions.find(o => o.value === fireParticleSource)?.tooltip}</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                   {/* Text Shaping Input (Shared state with Smoke tab) */}
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div>
+                                <Label htmlFor="particleTextFire" className="text-sm font-medium flex items-center"><Type className="mr-1.5 h-3.5 w-3.5" />Particle Text</Label>
+                                <Textarea
+                                    id="particleTextFire"
+                                    placeholder="Enter text..."
+                                    value={particleText}
+                                    onChange={(e) => setParticleText(e.target.value)}
+                                    className="mt-1 text-sm"
+                                    rows={2}
+                                />
+                                <p className="text-xs text-muted-foreground mt-1">If text is entered, particles will form this shape, overriding the 'Particle Source' setting.</p>
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center">
+                            <p>Make particles form the shape of this text. Clears the 'Particle Source' setting.</p>
+                        </TooltipContent>
+                    </Tooltip>
                 </div>
-            )}
-          </TabsContent>
-        </Tabs>
+              )}
+            </TabsContent>
+
+            {/* --- Media Tab --- */}
+            <TabsContent value="media" className="mt-4 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <Tooltip>
+                     <TooltipTrigger asChild>
+                        <Button onClick={() => setIsPlaying(!isPlaying)} variant="outline" className="w-full">
+                          {isPlaying ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
+                          {isPlaying ? 'Pause' : 'Play'}
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="center"><p>{isPlaying ? 'Pause the simulation.' : 'Resume the simulation.'}</p></TooltipContent>
+                  </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            { !isRecording ? (
+                                <Button onClick={onStartRecording} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+                                <CircleDot className="mr-2 h-4 w-4" /> Record
+                                </Button>
+                            ) : (
+                                <Button onClick={onStopRecording} variant="destructive" className="w-full">
+                                <StopCircle className="mr-2 h-4 w-4" /> Stop
+                                </Button>
+                            )}
+                        </TooltipTrigger>
+                         <TooltipContent side="top" align="center"><p>{isRecording ? 'Stop recording the simulation.' : 'Start recording the simulation to a video file.'}</p></TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                         <TooltipTrigger asChild>
+                            <Button
+                                onClick={onDownloadRecording}
+                                variant="outline"
+                                className="w-full"
+                                disabled={!recordedVideoUrl || !mediaRecorderRef.current}
+                            >
+                                <Download className="mr-2 h-4 w-4" />
+                                Save
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center"><p>Download the recorded simulation video (if available).</p></TooltipContent>
+                    </Tooltip>
+                </div>
+                 {recordedVideoUrl && (
+                    <div className="mt-4">
+                        <Label className="text-sm font-medium">Preview:</Label>
+                        <video src={recordedVideoUrl} controls className="w-full rounded-md mt-1 max-h-60 aspect-video bg-muted"></video>
+                    </div>
+                )}
+            </TabsContent>
+          </Tabs>
+        </TooltipProvider>
       </SidebarContent>
     </Sidebar>
   );
