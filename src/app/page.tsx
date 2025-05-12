@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
@@ -6,6 +5,7 @@ import SmokeCanvas from '@/components/smoke-genius/SmokeCanvas';
 import ControlsPanel from '@/components/smoke-genius/ControlsPanel';
 import type { SimulationPreset, BlendMode, ParticleSource } from '@/components/smoke-genius/types';
 import { useToast } from "@/hooks/use-toast";
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 const presets: SimulationPreset[] = [
   {
@@ -341,107 +341,111 @@ export default function SmokeGeniusPage() {
   }, [recordedVideoUrl, backgroundColor]);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden text-foreground">
-      <main className="flex-grow relative">
-        <SmokeCanvas
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden text-foreground bg-background">
+        <ControlsPanel
           isSmokeEnabled={isSmokeEnabled}
+          setIsSmokeEnabled={setIsSmokeEnabled}
           smokeDensity={smokeDensity}
+          setSmokeDensity={setSmokeDensity}
           smokeBaseColor={smokeBaseColor}
+          setSmokeBaseColor={setSmokeBaseColor}
           smokeAccentColor={smokeAccentColor}
+          setSmokeAccentColor={setSmokeAccentColor}
           smokeSpeed={smokeSpeed}
+          setSmokeSpeed={setSmokeSpeed}
           smokeSpread={smokeSpread}
+          setSmokeSpread={setSmokeSpread}
           smokeBlendMode={smokeBlendMode}
+          setSmokeBlendMode={setSmokeBlendMode}
           smokeSource={smokeSource}
+          setSmokeSource={setSmokeSource}
           smokeOpacity={smokeOpacity}
+          setSmokeOpacity={setSmokeOpacity}
           smokeTurbulence={smokeTurbulence}
+          setSmokeTurbulence={setSmokeTurbulence}
           smokeDissipation={smokeDissipation}
+          setSmokeDissipation={setSmokeDissipation}
           smokeBuoyancy={smokeBuoyancy}
+          setSmokeBuoyancy={setSmokeBuoyancy}
 
           isFireEnabled={isFireEnabled}
+          setIsFireEnabled={setIsFireEnabled}
           fireBaseColor={fireBaseColor}
+          setFireBaseColor={setFireBaseColor}
           fireAccentColor={fireAccentColor}
+          setFireAccentColor={setFireAccentColor}
           fireDensity={fireDensity}
+          setFireDensity={setFireDensity}
           fireSpeed={fireSpeed}
+          setFireSpeed={setFireSpeed}
           fireSpread={fireSpread}
+          setFireSpread={setFireSpread}
           fireParticleSource={fireParticleSource}
+          setFireParticleSource={setFireParticleSource}
           fireBlendMode={fireBlendMode}
+          setFireBlendMode={setFireBlendMode}
           fireOpacity={fireOpacity}
+          setFireOpacity={setFireOpacity}
           fireTurbulence={fireTurbulence}
+          setFireTurbulence={setFireTurbulence}
 
           backgroundColor={backgroundColor}
+          setBackgroundColor={setBackgroundColor}
           windDirectionX={windDirectionX}
+          setWindDirectionX={setWindDirectionX}
           windStrength={windStrength}
+          setWindStrength={setWindStrength}
 
+          isRecording={isRecording}
+          onStartRecording={handleStartRecording}
+          onStopRecording={handleStopRecording}
+          onDownloadRecording={handleDownloadRecording}
+          recordedVideoUrl={recordedVideoUrl}
           isPlaying={isPlaying}
-          onCanvasReady={handleCanvasReady}
+          setIsPlaying={setIsPlaying}
+          mediaRecorderRef={mediaRecorderRef}
+          presets={presets}
+          onApplyPreset={applyPreset}
         />
-      </main>
-      <ControlsPanel
-        isSmokeEnabled={isSmokeEnabled}
-        setIsSmokeEnabled={setIsSmokeEnabled}
-        smokeDensity={smokeDensity}
-        setSmokeDensity={setSmokeDensity}
-        smokeBaseColor={smokeBaseColor}
-        setSmokeBaseColor={setSmokeBaseColor}
-        smokeAccentColor={smokeAccentColor}
-        setSmokeAccentColor={setSmokeAccentColor}
-        smokeSpeed={smokeSpeed}
-        setSmokeSpeed={setSmokeSpeed}
-        smokeSpread={smokeSpread}
-        setSmokeSpread={setSmokeSpread}
-        smokeBlendMode={smokeBlendMode}
-        setSmokeBlendMode={setSmokeBlendMode}
-        smokeSource={smokeSource}
-        setSmokeSource={setSmokeSource}
-        smokeOpacity={smokeOpacity}
-        setSmokeOpacity={setSmokeOpacity}
-        smokeTurbulence={smokeTurbulence}
-        setSmokeTurbulence={setSmokeTurbulence}
-        smokeDissipation={smokeDissipation}
-        setSmokeDissipation={setSmokeDissipation}
-        smokeBuoyancy={smokeBuoyancy}
-        setSmokeBuoyancy={setSmokeBuoyancy}
+        <SidebarInset>
+          <main className="flex-grow relative h-full w-full">
+            <SmokeCanvas
+              isSmokeEnabled={isSmokeEnabled}
+              smokeDensity={smokeDensity}
+              smokeBaseColor={smokeBaseColor}
+              smokeAccentColor={smokeAccentColor}
+              smokeSpeed={smokeSpeed}
+              smokeSpread={smokeSpread}
+              smokeBlendMode={smokeBlendMode}
+              smokeSource={smokeSource}
+              smokeOpacity={smokeOpacity}
+              smokeTurbulence={smokeTurbulence}
+              smokeDissipation={smokeDissipation}
+              smokeBuoyancy={smokeBuoyancy}
 
-        isFireEnabled={isFireEnabled}
-        setIsFireEnabled={setIsFireEnabled}
-        fireBaseColor={fireBaseColor}
-        setFireBaseColor={setFireBaseColor}
-        fireAccentColor={fireAccentColor}
-        setFireAccentColor={setFireAccentColor}
-        fireDensity={fireDensity}
-        setFireDensity={setFireDensity}
-        fireSpeed={fireSpeed}
-        setFireSpeed={setFireSpeed}
-        fireSpread={fireSpread}
-        setFireSpread={setFireSpread}
-        fireParticleSource={fireParticleSource}
-        setFireParticleSource={setFireParticleSource}
-        fireBlendMode={fireBlendMode}
-        setFireBlendMode={setFireBlendMode}
-        fireOpacity={fireOpacity}
-        setFireOpacity={setFireOpacity}
-        fireTurbulence={fireTurbulence}
-        setFireTurbulence={setFireTurbulence}
+              isFireEnabled={isFireEnabled}
+              fireBaseColor={fireBaseColor}
+              fireAccentColor={fireAccentColor}
+              fireDensity={fireDensity}
+              fireSpeed={fireSpeed}
+              fireSpread={fireSpread}
+              fireParticleSource={fireParticleSource}
+              fireBlendMode={fireBlendMode}
+              fireOpacity={fireOpacity}
+              fireTurbulence={fireTurbulence}
 
-        backgroundColor={backgroundColor}
-        setBackgroundColor={setBackgroundColor}
-        windDirectionX={windDirectionX}
-        setWindDirectionX={setWindDirectionX}
-        windStrength={windStrength}
-        setWindStrength={setWindStrength}
+              backgroundColor={backgroundColor}
+              windDirectionX={windDirectionX}
+              windStrength={windStrength}
 
-        isRecording={isRecording}
-        onStartRecording={handleStartRecording}
-        onStopRecording={handleStopRecording}
-        onDownloadRecording={handleDownloadRecording}
-        recordedVideoUrl={recordedVideoUrl}
-        isPlaying={isPlaying}
-        setIsPlaying={setIsPlaying}
-        mediaRecorderRef={mediaRecorderRef}
-        presets={presets}
-        onApplyPreset={applyPreset}
-      />
-    </div>
+              isPlaying={isPlaying}
+              onCanvasReady={handleCanvasReady}
+            />
+          </main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   );
 }
 
