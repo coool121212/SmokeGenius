@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
@@ -13,16 +12,16 @@ const presets: SimulationPreset[] = [
     name: "Default Realistic Smoke",
     description: "Realistic, billowing white smoke against a dark background.",
     isSmokeEnabled: true,
-    smokeDensity: 5000, // Adjusted to new max
+    smokeDensity: 6500, // Increased default density
     smokeBaseColor: "#FFFFFF",
     smokeAccentColor: "#E0E0E0",
     smokeSpeed: 0.015,
-    smokeSpread: 1.0,
+    smokeSpread: 1.5, // Increased default spread for softer look
     smokeBlendMode: "Normal",
     smokeSource: "Bottom",
-    smokeOpacity: 0.6,
+    smokeOpacity: 0.5, // Slightly reduced opacity for softness
     smokeTurbulence: 1.2,
-    smokeDissipation: 0.2,
+    smokeDissipation: 0.15, // Slightly slower dissipation
     smokeBuoyancy: 0.005,
     isFireEnabled: false,
     fireBaseColor: "#FFA500",
@@ -43,21 +42,21 @@ const presets: SimulationPreset[] = [
     name: "Gentle Campfire",
     description: "A calm campfire with light, greyish smoke.",
     isSmokeEnabled: true,
-    smokeDensity: 1500, // Keep low
+    smokeDensity: 1500,
     smokeBaseColor: "#A9A9A9",
     smokeAccentColor: "#808080",
     smokeSpeed: 0.015,
-    smokeSpread: 2.2,
+    smokeSpread: 2.5, // Increased spread
     smokeBlendMode: "Normal",
     smokeSource: "Center",
-    smokeOpacity: 0.6,
+    smokeOpacity: 0.55,
     smokeTurbulence: 0.8,
     smokeDissipation: 0.15,
     smokeBuoyancy: 0.008,
     isFireEnabled: true,
     fireBaseColor: "#FF8C00",
     fireAccentColor: "#FFB347",
-    fireDensity: 800, // Keep low
+    fireDensity: 800,
     fireSpeed: 0.02,
     fireSpread: 1.5,
     fireParticleSource: "Bottom",
@@ -73,21 +72,21 @@ const presets: SimulationPreset[] = [
     name: "Volcanic Eruption",
     description: "Intense, dark smoke and fiery lava-like effects.",
     isSmokeEnabled: true,
-    smokeDensity: 5000, // Adjusted to new max
+    smokeDensity: 7500, // Increased density
     smokeBaseColor: "#333333",
     smokeAccentColor: "#1A1A1A",
     smokeSpeed: 0.05,
     smokeSpread: 4.5,
     smokeBlendMode: "Normal",
     smokeSource: "Bottom",
-    smokeOpacity: 0.9,
+    smokeOpacity: 0.8, // Slightly reduced opacity
     smokeTurbulence: 2.5,
     smokeDissipation: 0.1,
     smokeBuoyancy: 0.01,
     isFireEnabled: true,
     fireBaseColor: "#FF4500",
     fireAccentColor: "#FF6347",
-    fireDensity: 3000, // Adjusted to new max
+    fireDensity: 3000,
     fireSpeed: 0.06,
     fireSpread: 3.5,
     fireParticleSource: "Bottom",
@@ -103,14 +102,14 @@ const presets: SimulationPreset[] = [
     name: "Mystic Fog",
     description: "Dense, ethereal light grey fog, no fire.",
     isSmokeEnabled: true,
-    smokeDensity: 4500, // Adjusted slightly below max
+    smokeDensity: 6000, // Increased density
     smokeBaseColor: "#E0E0E0",
     smokeAccentColor: "#B0B0B0",
     smokeSpeed: 0.01,
     smokeSpread: 4.0,
     smokeBlendMode: "Normal",
     smokeSource: "Bottom",
-    smokeOpacity: 0.5,
+    smokeOpacity: 0.4, // Reduced opacity for fog
     smokeTurbulence: 0.5,
     smokeDissipation: 0.05,
     smokeBuoyancy: 0.002,
@@ -133,21 +132,21 @@ const presets: SimulationPreset[] = [
     name: "Cyberpunk Smog",
     description: "Dense, neon-accented smoke in a dark city.",
     isSmokeEnabled: true,
-    smokeDensity: 5000, // Adjusted to new max
+    smokeDensity: 7000, // Increased density
     smokeBaseColor: "#8A2BE2", // Purple
     smokeAccentColor: "#00FFFF", // Cyan accent
     smokeSpeed: 0.025,
     smokeSpread: 3.5,
     smokeBlendMode: "Additive", // Neon glow
     smokeSource: "Center",
-    smokeOpacity: 0.8,
+    smokeOpacity: 0.7, // Adjusted opacity
     smokeTurbulence: 1.5,
     smokeDissipation: 0.25,
     smokeBuoyancy: 0.003,
     isFireEnabled: true,
     fireBaseColor: "#FF00FF", // Magenta fire
     fireAccentColor: "#DA70D6", // Orchid accent
-    fireDensity: 500, // Keep low
+    fireDensity: 500,
     fireSpeed: 0.04,
     fireSpread: 1.2,
     fireParticleSource: "Center",
@@ -164,13 +163,13 @@ const presets: SimulationPreset[] = [
     description: "Particles forming the word 'SMOKE'.",
     particleText: "SMOKE", // Add text here
     isSmokeEnabled: true,
-    smokeDensity: 4000, // Reduced density for text visibility & performance
+    smokeDensity: 4000, // Keep lower for text visibility
     smokeBaseColor: "#FFFFFF",
     smokeAccentColor: "#CCCCCC",
     smokeSpeed: 0.005,
     smokeSpread: 0.5,
     smokeBlendMode: "Normal",
-    smokeSource: "Bottom",
+    smokeSource: "Bottom", // Overridden by text
     smokeOpacity: 0.7,
     smokeTurbulence: 0.3,
     smokeDissipation: 0.1,
@@ -402,15 +401,18 @@ export default function SmokeGeniusPage() {
 
   // --- Effects ---
   useEffect(() => {
-    applyPreset(presets[0]);
+    // Apply the default preset when the component mounts
+     applyPreset(presets[0]);
      // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once on mount
+
 
   useEffect(() => {
     document.body.style.backgroundColor = backgroundColor;
   }, [backgroundColor]);
 
    useEffect(() => {
+    // Cleanup recorded video URL when component unmounts or URL changes
     let currentUrl = recordedVideoUrl;
     return () => {
       if (currentUrl) {
