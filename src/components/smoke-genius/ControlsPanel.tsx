@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -117,10 +118,10 @@ interface ControlsPanelProps {
   setSmokeDissipation: Dispatch<SetStateAction<number>>;
   smokeBuoyancy: number;
   setSmokeBuoyancy: Dispatch<SetStateAction<number>>;
-  particleText: string; // New prop for text shaping
-  setParticleText: Dispatch<SetStateAction<string>>; // New prop setter
-  persistTextShape: boolean; // New state for persisting text shape
-  setPersistTextShape: Dispatch<SetStateAction<boolean>>; // Setter for persist state
+  particleText: string; 
+  setParticleText: Dispatch<SetStateAction<string>>; 
+  persistTextShape: boolean; 
+  setPersistTextShape: Dispatch<SetStateAction<boolean>>; 
 
   // Fire Props
   isFireEnabled: boolean;
@@ -181,8 +182,8 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
   smokeTurbulence, setSmokeTurbulence,
   smokeDissipation, setSmokeDissipation,
   smokeBuoyancy, setSmokeBuoyancy,
-  particleText, setParticleText, // Destructure new props
-  persistTextShape, setPersistTextShape, // Destructure persist props
+  particleText, setParticleText, 
+  persistTextShape, setPersistTextShape, 
 
   // Fire Props
   isFireEnabled, setIsFireEnabled,
@@ -240,7 +241,6 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
               const selectedPreset = presets.find(p => p.name === value);
               if (selectedPreset) {
                 onApplyPreset(selectedPreset);
-                // Apply preset text & persist setting
                 setParticleText(selectedPreset.particleText || '');
                 setPersistTextShape(selectedPreset.persistTextShape ?? false);
               }
@@ -320,7 +320,6 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
               </div>
               {isSmokeEnabled && (
                 <div className="grid grid-cols-1 gap-y-3">
-                  {/* Color Pickers */}
                   <div className="grid grid-cols-2 gap-4">
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -347,7 +346,6 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                        <TooltipContent side="top" align="center"><p>A secondary color blended randomly for variation.</p></TooltipContent>
                     </Tooltip>
                   </div>
-                  {/* Sliders */}
                   <ControlSlider id="smokeOpacity" label="Opacity" tooltip="Overall transparency of smoke particles (0=invisible, 1=opaque)." icon={Layers2} min={0} max={1} step={0.01} value={smokeOpacity} onValueChange={setSmokeOpacity} decimals={2} />
                   <ControlSlider id="smokeSpread" label="Size (Spread)" tooltip="Average size and spread area of smoke particles." icon={Maximize2} min={0.1} max={5} step={0.1} value={smokeSpread} onValueChange={setSmokeSpread} decimals={1} />
                   <ControlSlider id="smokeSpeed" label="Speed" tooltip="Base upward speed of smoke particles." icon={Gauge} min={0.001} max={0.1} step={0.001} value={smokeSpeed} onValueChange={setSmokeSpeed} decimals={3} />
@@ -356,7 +354,6 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                   <ControlSlider id="smokeDissipation" label="Dissipation" tooltip="How quickly particles fade out (0=slow, 1=fast)." icon={Layers2} min={0} max={1} step={0.01} value={smokeDissipation} onValueChange={setSmokeDissipation} decimals={2} />
                   <ControlSlider id="smokeBuoyancy" label="Buoyancy" tooltip="How strongly particles rise (simulates heat)." icon={ChevronsUp} min={0} max={0.05} step={0.001} value={smokeBuoyancy} onValueChange={setSmokeBuoyancy} decimals={3} />
 
-                  {/* Selects */}
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div>
@@ -398,7 +395,6 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                      </TooltipContent>
                   </Tooltip>
 
-                   {/* Text Shaping Input */}
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <div>
@@ -419,7 +415,6 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                         </TooltipContent>
                     </Tooltip>
 
-                     {/* Persist Text Shape Switch */}
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <div className="flex items-center justify-between mt-2">
@@ -431,7 +426,7 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                                     id="persistTextShapeSmoke"
                                     checked={persistTextShape}
                                     onCheckedChange={setPersistTextShape}
-                                    disabled={!particleText} // Disable if no text is entered
+                                    disabled={!particleText} 
                                 />
                             </div>
                         </TooltipTrigger>
@@ -452,7 +447,6 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
               </div>
               {isFireEnabled && (
                  <div className="grid grid-cols-1 gap-y-3">
-                   {/* Color Pickers */}
                    <div className="grid grid-cols-2 gap-4">
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -480,14 +474,12 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                       </Tooltip>
                     </div>
 
-                  {/* Sliders */}
                   <ControlSlider id="fireOpacity" label="Opacity" tooltip="Overall transparency of fire particles." icon={Layers2} min={0} max={1} step={0.01} value={fireOpacity} onValueChange={setFireOpacity} decimals={2} />
                   <ControlSlider id="fireSpread" label="Size (Spread)" tooltip="Average size and spread area of fire particles." icon={Maximize2} min={0.1} max={3} step={0.1} value={fireSpread} onValueChange={setFireSpread} decimals={1} />
                   <ControlSlider id="fireSpeed" label="Speed" tooltip="Base upward speed of fire particles." icon={Gauge} min={0.005} max={0.2} step={0.005} value={fireSpeed} onValueChange={setFireSpeed} decimals={3} />
                   <ControlSlider id="fireDensity" label="Count (Intensity)" tooltip="Number of fire particles (max 5000)." icon={Users} min={100} max={5000} step={50} value={fireDensity} onValueChange={setFireDensity} decimals={0} />
                   <ControlSlider id="fireTurbulence" label="Turbulence" tooltip="Amount of chaotic, flickering motion." icon={Waves} min={0} max={5} step={0.1} value={fireTurbulence} onValueChange={setFireTurbulence} decimals={1} />
 
-                  {/* Selects */}
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div>
@@ -529,7 +521,6 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                     </TooltipContent>
                   </Tooltip>
 
-                   {/* Text Shaping Input (Shared state with Smoke tab) */}
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <div>
@@ -550,7 +541,6 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
                         </TooltipContent>
                     </Tooltip>
 
-                     {/* Persist Text Shape Switch (Shared state) */}
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <div className="flex items-center justify-between mt-2">
@@ -630,3 +620,5 @@ const ControlsPanel: React.FC<ControlsPanelProps> = ({
 };
 
 export default ControlsPanel;
+
+    
