@@ -306,8 +306,8 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       }
       particleSizes[i] = isNaN(particleSize) ? 0.1 : Math.max(0.02, particleSize); 
       
-      const maxLifespan = maxLifespanBase * (0.7 + rand1 * 0.3); 
-      lives[i] = isNaN(maxLifespan) ? maxLifespanBase : maxLifespan;
+      const maxLifespan = maxLifespanBase * (0.7 + rand1 * 0.3);
+      lives[i] = (isNaN(maxLifespan) ? maxLifespanBase : maxLifespan) * Math.random();
 
 
       turbulenceOffsets[i3] = Math.random() * 2 * Math.PI; 
@@ -393,7 +393,8 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
             #ifdef USE_SIZEATTENUATION
               bool isPerspectiveFlag = isPerspectiveMatrix( projectionMatrix ); 
               if ( isPerspectiveFlag ) {
-                  gl_PointSize *= ( scale / -mvPosition.z );
+                  // Three.js PointsMaterial internally uses a 'scale' uniform for size attenuation.
+                   gl_PointSize *= ( scale / -mvPosition.z ); // Uses the 'scale' uniform from PointsMaterial
               }
             #endif
 
@@ -622,6 +623,9 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
              if (pointsMaterial.uniforms?.time) {
                  pointsMaterial.uniforms.time.value = time;
              } 
+             if (pointsMaterial.uniforms?.scale && typeof window !== 'undefined') {
+                 pointsMaterial.uniforms.scale.value = window.innerHeight / 2;
+             }
           }
         };
         updateShaderTime(smokeParticlesRef);
@@ -728,7 +732,8 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
                          const sPos = getParticleStartPosition(isFire, currentSourceType, sSpread, camZ);
                          posArr[i3] = sPos.x; posArr[i3+1] = sPos.y; posArr[i3+2] = sPos.z; posUpd=true;
 
-                         lifeArr[i] = bLifespan; 
+                         lifeArr[i] = bLifespan * Math.random(); // Initialize with random life to desync
+                         lifeUpd=true;
                          
                          let rAlpha = sOpacity*(isFire?(0.7+particleRandFactor1*0.3):(0.3+particleRandFactor1*0.3));
                          let rSize = (isFire?(0.5+particleRandFactor2*0.5)*sSpread*1.2:(1.2+particleRandFactor2*1.0)*sSpread*1.5);
@@ -831,6 +836,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
           updateParticles(fireParticlesRef,isFireEnabled,true,actualFireParticleCount,fireSpeed,fireSpread,fireOpacity,fireTurbulence,undefined,undefined,currentFireBaseC,currentFireAccentC,finalFireColor,effectiveFireSource,timeFactorFire); 
        }
 
+       // --- Render Scene ---
        try {
            if (rendererRef.current && sceneRef.current && cameraRef.current) {
              rendererRef.current.render(sceneRef.current, cameraRef.current);
@@ -1011,3 +1017,5 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     
 
     
+
+
