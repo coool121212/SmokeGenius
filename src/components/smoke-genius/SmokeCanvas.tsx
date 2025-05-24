@@ -52,14 +52,14 @@ const BASE_FIRE_LIFESPAN = 70;
 const BASE_SMOKE_LIFESPAN = 300; 
 const BOTTOM_SOURCE_X_SPREAD = 12.0;
 
-const TEXT_CANVAS_WIDTH = 512;
-const TEXT_CANVAS_HEIGHT = 128;
-const TEXT_FONT_SIZE = 80;
-const TEXT_FONT = `bold ${TEXT_FONT_SIZE}px Arial, sans-serif`;
-const TEXT_SAMPLE_DENSITY = 1.0; // Increased for potentially better text formation
-const TEXT_SHAPE_SCALE = 0.02;
-const PERSIST_PULL_FACTOR = 0.15; // Increased from 0.08
-const PERSIST_JITTER_STRENGTH = 0.00005; // Decreased from 0.0005, then 0.0001
+const TEXT_CANVAS_WIDTH = 1024; // Increased
+const TEXT_CANVAS_HEIGHT = 256; // Increased
+const TEXT_FONT_SIZE = 150; // Increased
+const TEXT_FONT = `bold ${TEXT_FONT_SIZE}px Arial, sans-serif`; // Updated
+const TEXT_SAMPLE_DENSITY = 2.0; 
+const TEXT_SHAPE_SCALE = 0.01; // Decreased
+const PERSIST_PULL_FACTOR = 0.15; 
+const PERSIST_JITTER_STRENGTH = 0.00005; 
 
 type EffectiveParticleSource = ParticleSource | "Text";
 
@@ -305,9 +305,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       }
       particleSizes[i] = isNaN(particleSize) ? 0.1 : Math.max(0.02, particleSize);
       
-      // Particle gets a slightly varied max lifespan based on rand1
       const maxLifespan = maxLifespanBase * (0.7 + rand1 * 0.3); 
-      // Initialize with a random portion of lifespan to desynchronize initial bursts
       lives[i] = (isNaN(maxLifespan) ? maxLifespanBase : maxLifespan) * Math.random();
 
 
@@ -331,7 +329,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     geometry.setAttribute('velocity', new THREE_Module.BufferAttribute(velocities, 3));
     geometry.setAttribute('color', new THREE_Module.BufferAttribute(particleColors, 3));
     geometry.setAttribute('alpha', new THREE_Module.BufferAttribute(alphas, 1));
-    geometry.setAttribute('particleSize', new THREE_Module.BufferAttribute(particleSizes, 1));
+    geometry.setAttribute('particleSize', new THREE_Module.BufferAttribute(particleSizes, 1)); 
     geometry.setAttribute('life', new THREE_Module.BufferAttribute(lives, 1));
     geometry.setAttribute('turbulenceOffset', new THREE_Module.BufferAttribute(turbulenceOffsets, 3));
     geometry.setAttribute('targetTextPoint', new THREE_Module.BufferAttribute(targetTextPoints, 3));
@@ -343,7 +341,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       depthWrite: false,
       transparent: true,
       vertexColors: true,
-      sizeAttenuation: true,
+      sizeAttenuation: true, 
     });
 
     if (THREE_Module) {
@@ -362,62 +360,73 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
 
     material.onBeforeCompile = shader => {
         shader.uniforms.time = { value: 0.0 };
-        shader.uniforms.scale = { value: typeof window !== 'undefined' ? window.innerHeight / 2 : 500 };
-
-
+        
         shader.vertexShader = `
-            attribute float particleSize;
+            attribute float particleSize; 
             attribute float alpha;
             attribute vec3 turbulenceOffset;
             attribute vec3 targetTextPoint;
             attribute vec3 randomFactors;
             varying float vAlpha;
-            varying float vRotation;
-            uniform float time;
-            // 'scale' uniform is provided by Three.js PointsMaterial when sizeAttenuation=true
-            // 'color' attribute is used for vColor by default with vertexColors = true
+            varying float vRotation; 
+            // varying vec3 vColor; is added by Three.js for vertexColors
 
             ${shader.vertexShader}
         `;
+
+        // 1. Pass alpha to fragment shader
         shader.vertexShader = shader.vertexShader.replace(
             `#include <logdepthbuf_vertex>`,
             `#include <logdepthbuf_vertex>
              vAlpha = alpha;
-             vRotation = 0.0; 
+             vRotation = 0.0; // Placeholder
             `
         );
+        
+        // 2. Set gl_PointSize from our 'particleSize' attribute.
+        //    Replace Three.js's default assignment (e.g., "gl_PointSize = size;").
+        const defaultPointSizeAssignment = /gl_PointSize\s*=\s*size\s*;/;
+        if (shader.vertexShader.match(defaultPointSizeAssignment)) {
+            shader.vertexShader = shader.vertexShader.replace(
+                defaultPointSizeAssignment,
+                `gl_PointSize = particleSize * 1.3;` 
+            );
+        } else {
+            shader.vertexShader = shader.vertexShader.replace(
+                `#include <clipping_planes_vertex>`, // A common earlier include
+                `#include <clipping_planes_vertex>\n` +
+                `gl_PointSize = particleSize * 1.3;`
+            );
+        }
+        
+        // 3. Clamp gl_PointSize *after* it might have been modified by size attenuation.
+        //    This is injected right before the vAlpha assignment we made earlier.
         shader.vertexShader = shader.vertexShader.replace(
-          `#include <project_vertex>`,
-          `
-            vec4 mvPosition = modelViewMatrix * vec4( transformed, 1.0 );
-            gl_Position = projectionMatrix * mvPosition;
-            gl_PointSize = particleSize * 1.3;
-
-            #ifdef USE_SIZEATTENUATION
-              bool isPerspective = isPerspectiveMatrix( projectionMatrix );
-              if ( isPerspective ) {
-                   gl_PointSize *= ( scale / -mvPosition.z );
-              }
-            #endif
-
-            gl_PointSize = max(1.0, gl_PointSize);
-          `
+            `vAlpha = alpha;`, 
+            `gl_PointSize = max(1.0, gl_PointSize);\n` + 
+            `             vAlpha = alpha;` 
         );
-
-
+        
+        // Fragment Shader modifications
         shader.fragmentShader = `
             varying float vAlpha;
             varying float vRotation;
             ${shader.fragmentShader}
-        `.replace(
+        `; 
+
+        shader.fragmentShader = shader.fragmentShader.replace(
             `#include <color_fragment>`,
             `#include <color_fragment>
-             diffuseColor.a *= vAlpha;`
-        ).replace(
+             diffuseColor.a *= vAlpha;` 
+        );
+
+        shader.fragmentShader = shader.fragmentShader.replace(
             `#include <map_particle_fragment>`,
             `#ifdef USE_MAP
-                vec4 mapTexel = texture2D( map, gl_PointCoord );
-                diffuseColor *= mapTexel;
+                vec2 uv = gl_PointCoord;
+                // Optional: rotation logic using vRotation can be added here
+                vec4 mapTexel = texture2D( map, uv );
+                diffuseColor *= mapTexel; 
              #endif`
         );
     };
@@ -495,10 +504,10 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
      return () => { textCanvasRef.current = null; };
   }, []);
 
-  const generateTextPoints = useCallback((text: string) => {
+ const generateTextPoints = useCallback((text: string) => {
     if (!textCanvasRef.current) {
         textPointsRef.current = [];
-        if (text || textPointsRef.current.length > 0) debouncedUpdateParticles(); 
+        if (textPointsRef.current.length > 0 || !text) debouncedUpdateParticles();
         return;
     }
 
@@ -506,13 +515,13 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) {
         textPointsRef.current = [];
-        if (text || textPointsRef.current.length > 0) debouncedUpdateParticles();
+        if (textPointsRef.current.length > 0 || !text) debouncedUpdateParticles();
         return;
     }
     
     const hadPointsBefore = textPointsRef.current.length > 0;
 
-    if (!text) {
+    if (!text) { 
         if (hadPointsBefore) { 
             textPointsRef.current = [];
             debouncedUpdateParticles(); 
@@ -544,7 +553,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
         }
     }
     textPointsRef.current = points;
-    debouncedUpdateParticles();
+    debouncedUpdateParticles(); 
 }, [debouncedUpdateParticles]);
 
 
@@ -635,9 +644,6 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
              const pointsMaterial = material as any; 
              if (pointsMaterial.uniforms?.time) {
                  pointsMaterial.uniforms.time.value = time;
-             }
-             if (pointsMaterial.uniforms?.scale && typeof window !== 'undefined') {
-                 pointsMaterial.uniforms.scale.value = window.innerHeight / 2;
              }
           }
         };
@@ -885,8 +891,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
                         const newAlpha = isNaN(currentAlphaVal) ? 0 : Math.max(0, Math.min(1, currentAlphaVal));
                         if(alphaArr[i] !== newAlpha){ alphaArr[i] = newAlpha; alphaUpd=true; }
 
-                        // Only update size if not persisting text (persisting handles its own size)
-                        if (!isCurrentlyPersistingText) {
+                        if (!isCurrentlyPersistingText) { 
                            const newSize = isNaN(currentSizeVal) ? 0.02 : Math.max(0.02, currentSizeVal);
                            if(sizeArr[i] !== newSize){ sizeArr[i] = newSize; sizeUpd=true; }
                         }
@@ -910,7 +915,6 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
            }
        } catch(e) {
            console.error("Error during render:", e);
-           // Optionally stop the animation loop on render error
            if (animationFrameIdRef.current) cancelAnimationFrame(animationFrameIdRef.current);
            animationFrameIdRef.current = null;
            setLoadError("Render error occurred. Please refresh.");
@@ -930,15 +934,6 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
              if(cameraRef.current.aspect !== width/height) {
                  cameraRef.current.aspect = width/height;
                  cameraRef.current.updateProjectionMatrix();
-             }
-             const newScaleValue = height / 2;
-             if (smokeParticlesRef.current?.material) {
-                const mat = smokeParticlesRef.current.material as any;
-                if(mat.uniforms?.scale) mat.uniforms.scale.value = newScaleValue;
-             }
-             if (fireParticlesRef.current?.material) {
-                const mat = fireParticlesRef.current.material as any;
-                if(mat.uniforms?.scale) mat.uniforms.scale.value = newScaleValue;
              }
          }
        }
@@ -1088,4 +1083,3 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
    return <div ref={mountRef} className="w-full h-full" role="img" aria-label="Smoke and fire simulation canvas" data-ai-hint="smoke fire particles simulation" />;
  };
  export default SmokeCanvas;
-
