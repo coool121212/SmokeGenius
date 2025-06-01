@@ -53,7 +53,7 @@ const BASE_SMOKE_LIFESPAN = 300;
 const BOTTOM_SOURCE_X_SPREAD = 12.0;
 
 const TEXT_CANVAS_WIDTH = 2048;
-const TEXT_CANVAS_HEIGHT = 256;
+const TEXT_CANVAS_HEIGHT = 320;
 const TEXT_FONT_SIZE = 110;
 const TEXT_FONT = `bold ${TEXT_FONT_SIZE}px Arial, sans-serif`;
 const TEXT_SAMPLE_DENSITY = 3.0;
@@ -530,7 +530,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+    ctx.fillText(text, canvas.width / 2, canvas.height / 2 - TEXT_FONT_SIZE / 4);
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
@@ -554,7 +554,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
         for (let i = 1; i < points.length; i++) {
             if (points[i].y < minY) minY = points[i].y;
         }
-        const desiredMinSceneY = -0.4;
+        const desiredMinSceneY = -0.5;
         if (minY < desiredMinSceneY) {
             const shiftAmount = desiredMinSceneY - minY;
             for (let i = 0; i < points.length; i++) {
