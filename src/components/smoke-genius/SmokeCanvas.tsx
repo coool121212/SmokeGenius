@@ -52,14 +52,14 @@ const BASE_FIRE_LIFESPAN = 70;
 const BASE_SMOKE_LIFESPAN = 300;
 const BOTTOM_SOURCE_X_SPREAD = 12.0;
 
-const TEXT_CANVAS_WIDTH = 1024;
+const TEXT_CANVAS_WIDTH = 2048; // Increased width
 const TEXT_CANVAS_HEIGHT = 256;
 const TEXT_FONT_SIZE = 110;
 const TEXT_FONT = `bold ${TEXT_FONT_SIZE}px Arial, sans-serif`;
-const TEXT_SAMPLE_DENSITY = 3.0; 
-const TEXT_SHAPE_SCALE = 0.0136; 
+const TEXT_SAMPLE_DENSITY = 3.0;
+const TEXT_SHAPE_SCALE = 0.0136;
 const PERSIST_PULL_FACTOR = 0.15;
-const PERSIST_JITTER_STRENGTH = 0.002; // Increased for smokier jitter
+const PERSIST_JITTER_STRENGTH = 0.002;
 
 type EffectiveParticleSource = ParticleSource | "Text";
 
@@ -366,22 +366,18 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
             attribute float alpha;
             varying float vAlpha;
             varying float vRotation; // Example for future use
-            // uniform float scale; // scale is already provided by PointsMaterial
+            // uniform float size; // Default uniform used by PointsMaterial
+            // uniform float scale; // Default uniform for size attenuation
             ${shader.vertexShader}
         `;
         
-        // Ensure we replace the correct line if it exists, or inject if it doesn't.
-        // The default PointsMaterial vertex shader contains 'gl_PointSize = size;'
         const defaultPointSizeAssignmentRegex = /gl_PointSize\s*=\s*size\s*;/;
         if (shader.vertexShader.match(defaultPointSizeAssignmentRegex)) {
             shader.vertexShader = shader.vertexShader.replace(
                 defaultPointSizeAssignmentRegex,
-                `gl_PointSize = particleSize * 1.3;` // Use our custom attribute
+                `gl_PointSize = particleSize * 1.3;` 
             );
         } else {
-            // Fallback: If the exact line isn't found (e.g. due to three.js version changes),
-            // try to inject it before size attenuation logic.
-            // This is less robust. The regex match is preferred.
             shader.vertexShader = shader.vertexShader.replace(
                 `#include <clipping_planes_vertex>`,
                 `#include <clipping_planes_vertex>\n` +
@@ -392,9 +388,9 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
         shader.vertexShader = shader.vertexShader.replace(
             `#include <logdepthbuf_vertex>`,
             `#include <logdepthbuf_vertex>
-             gl_PointSize = max(1.0, gl_PointSize); // Clamp after potential attenuation
+             gl_PointSize = max(1.0, gl_PointSize); 
              vAlpha = alpha;
-             vRotation = 0.0; // Example
+             vRotation = 0.0; 
             `
         );
 
@@ -410,17 +406,12 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
              diffuseColor.a *= vAlpha;`
         );
         
-        // Updated map_particle_fragment replacement
         shader.fragmentShader = shader.fragmentShader.replace(
             `#include <map_particle_fragment>`,
             `#ifdef USE_MAP
-                vec2 uv = gl_PointCoord; // Standard point coordinates
-                // Example: Simple rotation (if vRotation was dynamic)
-                // float mid = 0.5;
-                // uv = vec2(cos(vRotation) * (uv.x - mid) - sin(vRotation) * (uv.y - mid) + mid,
-                //           sin(vRotation) * (uv.x - mid) + cos(vRotation) * (uv.y - mid) + mid);
+                vec2 uv = gl_PointCoord; 
                 vec4 mapTexel = texture2D( map, uv );
-                diffuseColor *= mapTexel; // Modulate diffuse color by texture
+                diffuseColor *= mapTexel; 
              #endif`
         );
     };
@@ -552,7 +543,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
         for (let i = 1; i < points.length; i++) {
             if (points[i].y < minY) minY = points[i].y;
         }
-        const desiredMinSceneY = -0.4; 
+        const desiredMinSceneY = -0.4;
         if (minY < desiredMinSceneY) {
             const shiftAmount = desiredMinSceneY - minY;
             for (let i = 0; i < points.length; i++) {
@@ -714,22 +705,20 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
               let effOpacity = propOpacity;
 
               if (isTextShapingMode) {
-                // General text shaping defaults
-                effSpread = isFire ? 0.3 : 0.25;
+                effSpread = isFire ? 0.25 : 0.2;
                 effTurbulence = 0.1;
                 effSpeed = 0.001;
                 effOpacity = isFire ? 0.9 : 0.85;
-                if (!isFire) { // Smoke specific
+                if (!isFire) { 
                     effBuoyancy = 0.0001;
-                    effDissipation = 0.015; // Default for non-persisted text
+                    effDissipation = persistTextShape ? 0.0005 : 0.015;
                 }
 
                 if (isCurrentlyPersistingText) {
-                    // Overrides for "smoky" persisted text
-                    effSpread = isFire ? 0.6 : 0.5; // Larger particles for smoky look
-                    effTurbulence = 0.2;          // More inherent 'waviness' for jitter calc base
+                    effSpread = isFire ? 0.6 : 0.5; 
+                    effTurbulence = 0.05; // Reduced for less aggressive base jitter
                     if (!isFire) {
-                        effDissipation = 0.01;    // Smoke dissipates slowly
+                        effDissipation = 0.01;
                         effBuoyancy = 0.00001; 
                     }
                     effSpeed = 0.0001; 
@@ -762,22 +751,14 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
                       lifeArr[i] -= (safeDelta * (15 + sDissipation * 40));
                       lifeUpd = true;
 
-                      if (lifeArr[i] <= 0 || isNaN(lifeArr[i]) || isNaN(posArr[i3+1])) { // check posArr for NaN too
+                      if (lifeArr[i] <= 0 || isNaN(lifeArr[i]) || isNaN(posArr[i3+1])) { 
                         const point = textPointsRef.current[i % textPointsRef.current.length];
                         posArr[i3] = isNaN(point.x) ? 0 : point.x;
                         posArr[i3+1] = isNaN(point.y) ? 0 : point.y;
                         posArr[i3+2] = 0; 
                         posUpd = true;
                         
-                        lifeArr[i] = bLifespan; // Reset life
-                        alphaArr[i] = sOpacity * 0.1; // Start almost transparent for fade-in
-                        alphaUpd = true;
-
-                        const targetSizePersist = sSpread * (isFire ? 0.8 : 0.7);
-                        sizeArr[i] = isNaN(targetSizePersist) ? 0.1 : Math.max(0.02, targetSizePersist); 
-                        sizeUpd = true;
-                        
-                        velArr[i3]=0; velArr[i3+1]=0; velArr[i3+2]=0; velUpd=true;
+                        lifeArr[i] = bLifespan; 
                         
                         targetPtArr[i3] = posArr[i3];
                         targetPtArr[i3+1] = posArr[i3+1];
@@ -786,7 +767,15 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
 
                         finalC.copy(baseC).lerp(accentC, particleRandFactor3);
                         colorArr[i3]=finalC.r;colorArr[i3+1]=finalC.g;colorArr[i3+2]=finalC.b; colorUpd=true;
-
+                        
+                        const targetSizePersist = effSpread * (isFire ? 0.75 : 0.7);
+                        sizeArr[i] = isNaN(targetSizePersist) ? 0.1 : Math.max(0.02, targetSizePersist);
+                        sizeUpd = true;
+                        
+                        alphaArr[i] = sOpacity * 0.1; // Start almost transparent for fade-in
+                        alphaUpd = true;
+                        
+                        velArr[i3]=0; velArr[i3+1]=0; velArr[i3+2]=0; velUpd=true;
                       } else {
                         const tX=targetPtArr[i3], tY=targetPtArr[i3+1], tZ=targetPtArr[i3+2];
                         const cX=posArr[i3], cY=posArr[i3+1], cZ=posArr[i3+2];
@@ -796,33 +785,32 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
                            posArr[i3+1] += (tY - cY) * PERSIST_PULL_FACTOR * safeDelta * 60;
                            posArr[i3+2] += (tZ - cZ) * PERSIST_PULL_FACTOR * safeDelta * 60;
 
-                           const jit = PERSIST_JITTER_STRENGTH;
+                           const jit = PERSIST_JITTER_STRENGTH * effSpread; // Scale jitter with particle size
                            posArr[i3] += (Math.random() - 0.5) * jit * safeDelta * 60;
                            posArr[i3+1] += (Math.random() - 0.5) * jit * safeDelta * 60;
-                           posArr[i3+2] += (Math.random() - 0.5) * jit * safeDelta * 60 * 0.3; // Less Z jitter
+                           posArr[i3+2] += (Math.random() - 0.5) * jit * safeDelta * 60 * 0.3; 
                            posUpd = true;
                         }
 
                         const lifeRatio = Math.max(0, Math.min(1, lifeArr[i] / Math.max(0.01, bLifespan)));
                         let currentAlphaVal = sOpacity;
-                        const fadeInEnd = 0.2, fadeOutStart = 0.7; // Define fade durations
+                        const fadeInEnd = 0.2, fadeOutStart = 0.7; 
                         if (lifeRatio < fadeInEnd) currentAlphaVal *= (lifeRatio / fadeInEnd);
                         else if (lifeRatio > fadeOutStart) currentAlphaVal *= Math.max(0,(1 - (lifeRatio - fadeOutStart) / (1 - fadeOutStart)));
                         
                         currentAlphaVal = isNaN(currentAlphaVal) ? 0 : Math.max(0, currentAlphaVal);
                         if(alphaArr[i] !== currentAlphaVal){ alphaArr[i] = currentAlphaVal; alphaUpd=true; }
                         
-                        // Size can remain constant or also vary with lifeRatio if desired
-                        const targetSizePersist = sSpread * (isFire ? 0.8 : 0.7);
+                        const targetSizePersist = effSpread * (isFire ? 0.8 : 0.7);
                         const newTargetSizePersist = isNaN(targetSizePersist) ? 0.1 : Math.max(0.02, targetSizePersist);
-                        if(sizeArr[i] !== newTargetSizePersist) {
-                            sizeArr[i] = newTargetSizePersist;
-                            sizeUpd = true;
-                        }
+                         if(sizeArr[i] !== newTargetSizePersist) {
+                             sizeArr[i] = newTargetSizePersist;
+                             sizeUpd = true;
+                         }
                       }
                       if(velArr[i3]!==0||velArr[i3+1]!==0||velArr[i3+2]!==0){ velArr[i3]=0; velArr[i3+1]=0; velArr[i3+2]=0; velUpd=true; }
 
-                  } else { // Normal simulation or non-persisted text
+                  } else { 
                       let cLife=lifeArr[i] - (safeDelta * (15 + sDissipation * 40));
                       lifeUpd = true;
 
@@ -836,9 +824,9 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
                          let rAlpha = sOpacity*(isFire?(0.7+particleRandFactor1*0.3):(0.3+particleRandFactor1*0.3));
                          let rSize = (isFire?(0.5+particleRandFactor2*0.5)*sSpread*1.2:(1.2+particleRandFactor2*1.0)*sSpread*1.5);
 
-                         if (isTextShapingMode && !isCurrentlyPersistingText) { // non-persisted text
-                            rAlpha = sOpacity; // Use the text mode opacity
-                            rSize = sSpread * (isFire ? 0.75 : 0.7);
+                         if (isTextShapingMode && !isCurrentlyPersistingText) { 
+                            rAlpha = effOpacity;
+                            rSize = effSpread * (isFire ? 0.75 : 0.7);
                          }
 
                          alphaArr[i] = isNaN(rAlpha)?sOpacity*(isFire?0.7:0.3):rAlpha; alphaUpd=true;
@@ -900,9 +888,9 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
                         let currentAlphaVal;
                         let currentSizeVal;
 
-                        if (isTextShapingMode && !isCurrentlyPersistingText) { // non-persisted text
-                            currentAlphaVal = sOpacity;
-                            currentSizeVal = sSpread * (isFire ? 0.75 : 0.7);
+                        if (isTextShapingMode && !isCurrentlyPersistingText) { 
+                            currentAlphaVal = effOpacity;
+                            currentSizeVal = effSpread * (isFire ? 0.75 : 0.7);
 
                             const fadeOutStartText = 0.4;
                             const fadeDurationText = 1.0 - fadeOutStartText;
@@ -915,7 +903,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
                             } else {
                                  currentAlphaVal = 0;
                             }
-                        } else { // Normal simulation (not text shaping OR text shaping is persisting, handled above)
+                        } else { 
                             const baseAlphaNonText = sOpacity * (isFire ? (0.7 + particleRandFactor1 * 0.3) : (0.3 + particleRandFactor1 * 0.3));
                             let alphaMultiplier = 1;
                             if (isFire) {
@@ -944,10 +932,13 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
                         }
 
                         const newAlpha = isNaN(currentAlphaVal) ? 0 : Math.max(0, Math.min(1, currentAlphaVal));
-                        if(alphaArr[i] !== newAlpha){ alphaArr[i] = newAlpha; alphaUpd=true; }
+                        if (alphaArr[i] !== newAlpha) { alphaArr[i] = newAlpha; alphaUpd=true; }
 
-                        const newSize = isNaN(currentSizeVal) ? 0.02 : Math.max(0.02, currentSizeVal);
-                        if(sizeArr[i] !== newSize){ sizeArr[i] = newSize; sizeUpd=true; }
+
+                        if (!isCurrentlyPersistingText) { // Only update size if not persisting text, persist block handles its own size.
+                            const newSize = isNaN(currentSizeVal) ? 0.02 : Math.max(0.02, currentSizeVal);
+                            if(sizeArr[i] !== newSize){ sizeArr[i] = newSize; sizeUpd=true; }
+                        }
                       }
                   }
               }
@@ -1133,5 +1124,3 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
    return <div ref={mountRef} className="w-full h-full" role="img" aria-label="Smoke and fire simulation canvas" data-ai-hint="smoke fire particles simulation" />;
  };
  export default SmokeCanvas;
-
-    
