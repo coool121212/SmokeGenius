@@ -1,11 +1,21 @@
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import SmokeCanvas from '@/components/smoke-genius/SmokeCanvas';
-import ControlsPanel from '@/components/smoke-genius/ControlsPanel';
+import dynamic from 'next/dynamic';
 import type { SimulationPreset, BlendMode, ParticleSource } from '@/components/smoke-genius/types';
 import { useToast } from "@/hooks/use-toast";
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+
+// Dynamically import components to avoid SSR issues
+const SmokeCanvas = dynamic(() => import('@/components/smoke-genius/SmokeCanvas'), {
+  ssr: false,
+  loading: () => <div className="w-full h-full bg-background animate-pulse" />
+});
+
+const ControlsPanel = dynamic(() => import('@/components/smoke-genius/ControlsPanel'), {
+  ssr: false,
+  loading: () => <div className="w-80 bg-card animate-pulse" />
+});
 
 const presets: SimulationPreset[] = [
   {
@@ -196,10 +206,10 @@ const presets: SimulationPreset[] = [
   },
 ];
 
-
 export default function SmokeGeniusPage() {
   // --- State Initialization ---
   const [currentPreset, setCurrentPreset] = useState<SimulationPreset>(presets[0]);
+  const [isClient, setIsClient] = useState(false);
 
   // Smoke States (Initialize from the first preset)
   const [isSmokeEnabled, setIsSmokeEnabled] = useState(currentPreset.isSmokeEnabled);
@@ -229,12 +239,10 @@ export default function SmokeGeniusPage() {
   const [fireOpacity, setFireOpacity] = useState(currentPreset.fireOpacity);
   const [fireTurbulence, setFireTurbulence] = useState(currentPreset.fireTurbulence);
 
-
   // Scene State
   const [backgroundColor, setBackgroundColor] = useState(currentPreset.backgroundColor);
   const [windDirectionX, setWindDirectionX] = useState(currentPreset.windDirectionX);
   const [windStrength, setWindStrength] = useState(currentPreset.windStrength);
-
 
   // Playback & Recording States
   const [isPlaying, setIsPlaying] = useState(true);
@@ -245,6 +253,11 @@ export default function SmokeGeniusPage() {
   const recordedChunksRef = useRef<Blob[]>([]);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { toast } = useToast();
+
+  // Client-side only rendering
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // --- Callbacks ---
   const handleCanvasReady = useCallback((canvasElement: HTMLCanvasElement) => {
@@ -286,7 +299,6 @@ export default function SmokeGeniusPage() {
         videoBitsPerSecond: videoBitsPerSecond
       });
 
-
       recordedChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
@@ -314,7 +326,6 @@ export default function SmokeGeniusPage() {
         toast({ title: "Recording Error", description: message, variant: "destructive" });
         setIsRecording(false);
       };
-
 
       mediaRecorderRef.current.start();
       setIsRecording(true);
@@ -414,7 +425,6 @@ export default function SmokeGeniusPage() {
      // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array ensures this runs only once on mount
 
-
   useEffect(() => {
     document.body.style.backgroundColor = backgroundColor;
   }, [backgroundColor]);
@@ -428,6 +438,16 @@ export default function SmokeGeniusPage() {
       }
     };
   }, [recordedVideoUrl]);
+
+  // Don't render until client-side
+  if (!isClient) {
+    return (
+      <div className="flex h-screen w-screen bg-background">
+        <div className="w-80 bg-card animate-pulse" />
+        <div className="flex-1 bg-background animate-pulse" />
+      </div>
+    );
+  }
 
   // --- Render ---
   return (
