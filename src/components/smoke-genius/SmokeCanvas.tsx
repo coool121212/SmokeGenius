@@ -85,8 +85,10 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const textCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const textContextRef = useRef<CanvasRenderingContext2D | null>(null);
-  const particlesRef = useRef<THREE.Points | null>(null);
+  const smokeParticlesRef = useRef<THREE.Points | null>(null);
+  const fireParticlesRef = useRef<THREE.Points | null>(null);
   const animationFrameRef = useRef<number>();
+  const mousePositionRef = useRef({ x: 0, y: 0 });
 
   const initScene = useCallback(() => {
     if (!containerRef.current) return;
@@ -113,12 +115,23 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     rendererRef.current = renderer;
     onCanvasReady(renderer.domElement);
 
-    // Text canvas setup for particle positioning
+    // Text canvas setup for particle positioning - increased dimensions
     const textCanvas = document.createElement('canvas');
-    textCanvas.width = 1024; // Increased for better text resolution
-    textCanvas.height = 512; // Increased height to prevent vertical cutoff
+    textCanvas.width = 2048; // Doubled for better resolution
+    textCanvas.height = 1024; // Doubled to prevent vertical cutoff
     textCanvasRef.current = textCanvas;
     textContextRef.current = textCanvas.getContext('2d');
+
+    // Mouse tracking
+    const handleMouseMove = (event: MouseEvent) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      mousePositionRef.current = {
+        x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
+        y: -((event.clientY - rect.top) / rect.height) * 2 + 1,
+      };
+    };
+
+    renderer.domElement.addEventListener('mousemove', handleMouseMove);
 
     // Initial particles setup
     createParticles();
@@ -134,6 +147,7 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       if (rendererRef.current && containerRef.current) {
         containerRef.current.removeChild(rendererRef.current.domElement);
       }
+      renderer.domElement.removeEventListener('mousemove', handleMouseMove);
       renderer.dispose();
     };
   }, [backgroundColor, onCanvasReady]);
@@ -142,8 +156,11 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     if (!sceneRef.current || !textContextRef.current || !textCanvasRef.current) return;
 
     // Clear existing particles
-    if (particlesRef.current) {
-      sceneRef.current.remove(particlesRef.current);
+    if (smokeParticlesRef.current) {
+      sceneRef.current.remove(smokeParticlesRef.current);
+    }
+    if (fireParticlesRef.current) {
+      sceneRef.current.remove(fireParticlesRef.current);
     }
 
     // Setup text rendering if text is provided
@@ -155,65 +172,133 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       
-      // Calculate font size based on canvas width and text length
-      const fontSize = Math.min(canvas.width / (particleText.length * 1.5), canvas.height / 2);
+      // Calculate font size with better scaling and padding
+      const maxFontSize = Math.min(
+        canvas.width / (particleText.length * 0.8), // More generous width scaling
+        canvas.height * 0.4 // Use 40% of canvas height for font size
+      );
+      const fontSize = Math.max(maxFontSize, 60); // Minimum font size of 60px
       ctx.font = `bold ${fontSize}px Arial`;
       
-      // Position text in center with vertical offset
-      ctx.fillText(particleText, canvas.width / 2, canvas.height / 2);
+      // Center text with proper vertical positioning
+      const x = canvas.width / 2;
+      const y = canvas.height / 2;
+      ctx.fillText(particleText, x, y);
     }
 
-    // Create particle geometry
-    const geometry = new THREE.BufferGeometry();
-    const vertices = new Float32Array(smokeDensity * 3);
-    const colors = new Float32Array(smokeDensity * 3);
+    // Create smoke particles
+    if (isSmokeEnabled) {
+      const smokeGeometry = new THREE.BufferGeometry();
+      const smokeVertices = new Float32Array(smokeDensity * 3);
+      const smokeColors = new Float32Array(smokeDensity * 3);
 
-    for (let i = 0; i < smokeDensity; i++) {
-      let x, y, z;
-      if (particleText && textContextRef.current) {
-        // Position particles based on text
-        const pos = getRandomTextPosition();
-        x = (pos.x - textCanvasRef.current!.width / 2) * 0.01;
-        y = (pos.y - textCanvasRef.current!.height / 2) * 0.01;
-        z = 0;
-      } else {
-        // Random distribution
-        x = (Math.random() - 0.5) * smokeSpread;
-        y = Math.random() * smokeSpread;
-        z = (Math.random() - 0.5) * smokeSpread;
+      for (let i = 0; i < smokeDensity; i++) {
+        let x, y, z;
+        if (particleText && textContextRef.current) {
+          // Position particles based on text
+          const pos = getRandomTextPosition();
+          // Better scaling for text positioning
+          x = (pos.x - textCanvasRef.current!.width / 2) * 0.005; // Reduced scaling
+          y = (pos.y - textCanvasRef.current!.height / 2) * 0.005; // Reduced scaling
+          z = (Math.random() - 0.5) * 0.1;
+        } else {
+          // Use source-based positioning
+          const sourcePos = getSourcePosition(smokeSource);
+          x = sourcePos.x + (Math.random() - 0.5) * smokeSpread * 0.5;
+          y = sourcePos.y + Math.random() * smokeSpread * 0.2;
+          z = sourcePos.z + (Math.random() - 0.5) * smokeSpread * 0.5;
+        }
+
+        smokeVertices[i * 3] = x;
+        smokeVertices[i * 3 + 1] = y;
+        smokeVertices[i * 3 + 2] = z;
+
+        // Color interpolation
+        const color = new THREE.Color(smokeBaseColor);
+        const accentColor = new THREE.Color(smokeAccentColor);
+        color.lerp(accentColor, Math.random());
+
+        smokeColors[i * 3] = color.r;
+        smokeColors[i * 3 + 1] = color.g;
+        smokeColors[i * 3 + 2] = color.b;
       }
 
-      vertices[i * 3] = x;
-      vertices[i * 3 + 1] = y;
-      vertices[i * 3 + 2] = z;
+      smokeGeometry.setAttribute('position', new THREE.BufferAttribute(smokeVertices, 3));
+      smokeGeometry.setAttribute('color', new THREE.BufferAttribute(smokeColors, 3));
 
-      // Color interpolation
-      const color = new THREE.Color(smokeBaseColor);
-      const accentColor = new THREE.Color(smokeAccentColor);
-      color.lerp(accentColor, Math.random());
+      // Material setup with proper blending
+      const smokeMaterial = new THREE.PointsMaterial({
+        size: 0.05 * smokeSpread,
+        vertexColors: true,
+        transparent: true,
+        opacity: smokeOpacity,
+        blending: getBlendingMode(smokeBlendMode),
+      });
 
-      colors[i * 3] = color.r;
-      colors[i * 3 + 1] = color.g;
-      colors[i * 3 + 2] = color.b;
+      // Create particle system
+      const smokeParticles = new THREE.Points(smokeGeometry, smokeMaterial);
+      sceneRef.current.add(smokeParticles);
+      smokeParticlesRef.current = smokeParticles;
     }
 
-    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    // Create fire particles
+    if (isFireEnabled) {
+      const fireGeometry = new THREE.BufferGeometry();
+      const fireVertices = new Float32Array(fireDensity * 3);
+      const fireColors = new Float32Array(fireDensity * 3);
 
-    // Material setup
-    const material = new THREE.PointsMaterial({
-      size: 0.05,
-      vertexColors: true,
-      transparent: true,
-      opacity: smokeOpacity,
-      blending: THREE.AdditiveBlending,
-    });
+      for (let i = 0; i < fireDensity; i++) {
+        let x, y, z;
+        if (particleText && textContextRef.current) {
+          // Position particles based on text
+          const pos = getRandomTextPosition();
+          x = (pos.x - textCanvasRef.current!.width / 2) * 0.005;
+          y = (pos.y - textCanvasRef.current!.height / 2) * 0.005;
+          z = (Math.random() - 0.5) * 0.1;
+        } else {
+          // Use source-based positioning
+          const sourcePos = getSourcePosition(fireParticleSource);
+          x = sourcePos.x + (Math.random() - 0.5) * fireSpread * 0.5;
+          y = sourcePos.y + Math.random() * fireSpread * 0.2;
+          z = sourcePos.z + (Math.random() - 0.5) * fireSpread * 0.5;
+        }
 
-    // Create particle system
-    const particles = new THREE.Points(geometry, material);
-    sceneRef.current.add(particles);
-    particlesRef.current = particles;
-  }, [particleText, smokeDensity, smokeSpread, smokeBaseColor, smokeAccentColor, smokeOpacity]);
+        fireVertices[i * 3] = x;
+        fireVertices[i * 3 + 1] = y;
+        fireVertices[i * 3 + 2] = z;
+
+        // Color interpolation
+        const color = new THREE.Color(fireBaseColor);
+        const accentColor = new THREE.Color(fireAccentColor);
+        color.lerp(accentColor, Math.random());
+
+        fireColors[i * 3] = color.r;
+        fireColors[i * 3 + 1] = color.g;
+        fireColors[i * 3 + 2] = color.b;
+      }
+
+      fireGeometry.setAttribute('position', new THREE.BufferAttribute(fireVertices, 3));
+      fireGeometry.setAttribute('color', new THREE.BufferAttribute(fireColors, 3));
+
+      // Material setup
+      const fireMaterial = new THREE.PointsMaterial({
+        size: 0.03 * fireSpread,
+        vertexColors: true,
+        transparent: true,
+        opacity: fireOpacity,
+        blending: getBlendingMode(fireBlendMode),
+      });
+
+      // Create particle system
+      const fireParticles = new THREE.Points(fireGeometry, fireMaterial);
+      sceneRef.current.add(fireParticles);
+      fireParticlesRef.current = fireParticles;
+    }
+  }, [
+    particleText, isSmokeEnabled, smokeDensity, smokeSpread, smokeBaseColor, smokeAccentColor, 
+    smokeOpacity, smokeBlendMode, smokeSource, isFireEnabled, fireDensity, fireSpread, 
+    fireBaseColor, fireAccentColor, fireOpacity, fireBlendMode, fireParticleSource
+  ]);
 
   const getRandomTextPosition = useCallback(() => {
     if (!textContextRef.current || !textCanvasRef.current) {
@@ -223,23 +308,57 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     const canvas = textCanvasRef.current;
     const ctx = textContextRef.current;
     let x, y;
+    let attempts = 0;
+    const maxAttempts = 100;
 
-    // Keep trying until we find a white pixel
+    // Keep trying until we find a white pixel or reach max attempts
     do {
       x = Math.floor(Math.random() * canvas.width);
       y = Math.floor(Math.random() * canvas.height);
       const pixel = ctx.getImageData(x, y, 1, 1).data;
-      if (pixel[0] > 0) break; // Found a white pixel
-    } while (true);
+      if (pixel[0] > 128) break; // Found a white-ish pixel
+      attempts++;
+    } while (attempts < maxAttempts);
 
     return { x, y };
+  }, []);
+
+  const getSourcePosition = useCallback((source: ParticleSource) => {
+    switch (source) {
+      case 'Center':
+        return { x: 0, y: 0, z: 0 };
+      case 'Bottom':
+        return { x: 0, y: -2, z: 0 };
+      case 'Mouse':
+        return { 
+          x: mousePositionRef.current.x * 2, 
+          y: mousePositionRef.current.y * 2, 
+          z: 0 
+        };
+      default:
+        return { x: 0, y: -2, z: 0 };
+    }
+  }, []);
+
+  const getBlendingMode = useCallback((mode: BlendMode) => {
+    switch (mode) {
+      case 'Additive':
+        return THREE.AdditiveBlending;
+      case 'Subtractive':
+        return THREE.SubtractiveBlending;
+      case 'Multiply':
+        return THREE.MultiplyBlending;
+      default:
+        return THREE.NormalBlending;
+    }
   }, []);
 
   const animate = useCallback(() => {
     if (!isPlaying) return;
 
-    if (particlesRef.current && !persistTextShape) {
-      const positions = particlesRef.current.geometry.attributes.position;
+    // Update smoke particles
+    if (smokeParticlesRef.current && !persistTextShape) {
+      const positions = smokeParticlesRef.current.geometry.attributes.position;
       const vertices = positions.array as Float32Array;
 
       for (let i = 0; i < vertices.length; i += 3) {
@@ -253,13 +372,46 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
           if (vertices[i + 1] > smokeSpread) {
             if (particleText) {
               const pos = getRandomTextPosition();
-              vertices[i] = (pos.x - textCanvasRef.current!.width / 2) * 0.01;
-              vertices[i + 1] = (pos.y - textCanvasRef.current!.height / 2) * 0.01;
-              vertices[i + 2] = 0;
+              vertices[i] = (pos.x - textCanvasRef.current!.width / 2) * 0.005;
+              vertices[i + 1] = (pos.y - textCanvasRef.current!.height / 2) * 0.005;
+              vertices[i + 2] = (Math.random() - 0.5) * 0.1;
             } else {
-              vertices[i] = (Math.random() - 0.5) * smokeSpread;
-              vertices[i + 1] = -smokeSpread / 2;
-              vertices[i + 2] = (Math.random() - 0.5) * smokeSpread;
+              const sourcePos = getSourcePosition(smokeSource);
+              vertices[i] = sourcePos.x + (Math.random() - 0.5) * smokeSpread * 0.5;
+              vertices[i + 1] = sourcePos.y;
+              vertices[i + 2] = sourcePos.z + (Math.random() - 0.5) * smokeSpread * 0.5;
+            }
+          }
+        }
+      }
+
+      positions.needsUpdate = true;
+    }
+
+    // Update fire particles
+    if (fireParticlesRef.current && !persistTextShape) {
+      const positions = fireParticlesRef.current.geometry.attributes.position;
+      const vertices = positions.array as Float32Array;
+
+      for (let i = 0; i < vertices.length; i += 3) {
+        if (!particleText || !persistTextShape) {
+          // Update particle positions
+          vertices[i] += (Math.random() - 0.5) * fireTurbulence * 0.01 + windDirectionX * windStrength;
+          vertices[i + 1] += fireSpeed + Math.random() * 0.01;
+          vertices[i + 2] += (Math.random() - 0.5) * fireTurbulence * 0.01;
+
+          // Reset particles that go too high
+          if (vertices[i + 1] > fireSpread) {
+            if (particleText) {
+              const pos = getRandomTextPosition();
+              vertices[i] = (pos.x - textCanvasRef.current!.width / 2) * 0.005;
+              vertices[i + 1] = (pos.y - textCanvasRef.current!.height / 2) * 0.005;
+              vertices[i + 2] = (Math.random() - 0.5) * 0.1;
+            } else {
+              const sourcePos = getSourcePosition(fireParticleSource);
+              vertices[i] = sourcePos.x + (Math.random() - 0.5) * fireSpread * 0.5;
+              vertices[i + 1] = sourcePos.y;
+              vertices[i + 2] = sourcePos.z + (Math.random() - 0.5) * fireSpread * 0.5;
             }
           }
         }
@@ -283,7 +435,13 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
     smokeSpeed,
     smokeBuoyancy,
     smokeSpread,
+    smokeSource,
+    fireTurbulence,
+    fireSpeed,
+    fireSpread,
+    fireParticleSource,
     getRandomTextPosition,
+    getSourcePosition,
   ]);
 
   // Initialize scene
@@ -322,6 +480,13 @@ const SmokeCanvas: React.FC<SmokeCanvasProps> = ({
       cancelAnimationFrame(animationFrameRef.current);
     }
   }, [isPlaying, animate]);
+
+  // Update background color
+  useEffect(() => {
+    if (rendererRef.current) {
+      rendererRef.current.setClearColor(backgroundColor);
+    }
+  }, [backgroundColor]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 };
